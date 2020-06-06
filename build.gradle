@@ -1,0 +1,79 @@
+plugins {
+    id "java-library"
+    id "maven-publish"
+    id "signing"
+}
+
+group "bayern.steinbrecher"
+version "0.1-SNAPSHOT"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+}
+
+compileJava.options.encoding = 'UTF-8'
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+java {
+    modularity.inferModulePath = true
+    withSourcesJar()
+    withJavadocJar()
+}
+
+javadoc {
+    if(JavaVersion.current().isJava9Compatible()) {
+        options.addBooleanOption('html5', true)
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+            def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
+            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+            credentials {
+                username = "${ossrhUsername}"
+                password = "${ossrhPassword}"
+            }
+        }
+    }
+    publications {
+        mavenScreenSwitcher(MavenPublication) {
+            pom {
+                name = 'DBConnector'
+                description = 'A library which aims to simplify database connections especially if they are over SSH'
+                url = 'https://github.com/TrackerSB/DBConnector'
+                licenses {
+                    license {
+                        name = 'The Beer-Ware License (Revision 42)'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'stefanHuber'
+                        name = 'Stefan Huber'
+                        email = 'stefan.huber.niedling@outlook.com'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/TrackerSB/DBConnector.git'
+                    developerConnection = 'scm:git:ssh://github.com/TrackerSB/DBConnector.git'
+                    url = 'https://steinbrecher.bayern'
+                }
+            }
+            from components.java
+        }
+    }
+}
+
+signing {
+    useGpgCmd()
+    sign publishing.publications.mavenScreenSwitcher
+}
