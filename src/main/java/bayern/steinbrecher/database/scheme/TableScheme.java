@@ -1,6 +1,5 @@
 package bayern.steinbrecher.database.scheme;
 
-import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -62,10 +61,10 @@ public class TableScheme<T, E> {
                             targetIndices.add(i);
                         }
                     }
-                    return new Pair<>(pattern, targetIndices);
+                    return Map.entry(pattern, targetIndices);
                 })
-                .filter(pair -> !pair.getValue().isEmpty())
-                .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
+                .filter(entry -> !entry.getValue().isEmpty())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         //Check duplicate target column indices
         Set<Integer> mappedTargetIndices = new HashSet<>();
