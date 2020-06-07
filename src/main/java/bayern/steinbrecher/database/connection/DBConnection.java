@@ -2,15 +2,18 @@ package bayern.steinbrecher.database.connection;
 
 import bayern.steinbrecher.database.SupportedDatabases;
 import bayern.steinbrecher.database.query.QueryGenerator;
+import bayern.steinbrecher.database.scheme.ColumnPattern;
 import bayern.steinbrecher.database.scheme.SimpleColumnPattern;
 import bayern.steinbrecher.database.scheme.TableScheme;
 import bayern.steinbrecher.utility.PopulatingMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
@@ -247,5 +250,48 @@ public abstract class DBConnection implements AutoCloseable {
      */
     public String getDatabaseName() {
         return databaseName;
+    }
+
+    /**
+     * Represents a concrete column that actually exists in an existing database. In contrast {@link ColumnPattern} only
+     * represents patterns of column names in a {@link TableScheme}.
+     *
+     * @param <T> The type of Java objects this column represents.
+     * @author Stefan Huber
+     * @since 0.1
+     */
+    public static class Column<T> {
+
+        private final String name;
+        private final Class<T> columnType;
+
+        /**
+         * Creates a concrete column that exists in an existing database.
+         *
+         * @param name       The name of the column.
+         * @param columnType The class of Java objects this column represents. Since this class represents existing columns
+         *                   this type can only be determined at runtime.
+         * @since 0.1
+         */
+        protected Column(@NotNull String name, @NotNull Class<T> columnType) {
+            this.name = Objects.requireNonNull(name);
+            this.columnType = Objects.requireNonNull(columnType);
+        }
+
+        /**
+         * @since 0.1
+         */
+        @NotNull
+        public String getName() {
+            return name;
+        }
+
+        /**
+         * @since 0.1
+         */
+        @NotNull
+        public Class<T> getColumnType() {
+            return columnType;
+        }
     }
 }

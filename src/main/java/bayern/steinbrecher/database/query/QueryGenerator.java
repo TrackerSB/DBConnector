@@ -1,7 +1,7 @@
 package bayern.steinbrecher.database.query;
 
 import bayern.steinbrecher.database.SupportedDatabases;
-import bayern.steinbrecher.database.connection.Column;
+import bayern.steinbrecher.database.connection.DBConnection;
 import bayern.steinbrecher.database.scheme.SimpleColumnPattern;
 import bayern.steinbrecher.database.scheme.TableCreationKeywords;
 import bayern.steinbrecher.database.scheme.TableScheme;
@@ -140,7 +140,7 @@ public final class QueryGenerator {
     // FIXME The method does not tell which conditions were excluded.
     public static Optional<String> generateSearchQueryFromColumns(
             @NotNull SupportedDatabases dbms, @NotNull String databaseName,
-            @NotNull TableScheme<?, ?> tableScheme, @NotNull Collection<Column<?>> columnsToSelect,
+            @NotNull TableScheme<?, ?> tableScheme, @NotNull Collection<DBConnection.Column<?>> columnsToSelect,
             @Nullable Collection<String> conditions) {
         Optional<String> searchQuery;
         if (columnsToSelect.isEmpty()) {
@@ -150,7 +150,7 @@ public final class QueryGenerator {
             StringBuilder sqlString = new StringBuilder("SELECT ")
                     .append(
                             columnsToSelect.stream()
-                                    .map(Column::getName)
+                                    .map(DBConnection.Column::getName)
                                     .map(name -> quoteIdentifier(dbms, name))
                                     .collect(Collectors.joining(", "))
                     )
