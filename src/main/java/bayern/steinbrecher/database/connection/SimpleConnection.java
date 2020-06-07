@@ -55,6 +55,9 @@ public final class SimpleConnection extends DBConnection {
         }
     }
 
+    /**
+     * @since 0.1
+     */
     @Override
     public List<List<String>> execQuery(String sqlCode) throws SQLException {
         try (PreparedStatement preparedStatement = connection.prepareStatement(sqlCode);
@@ -78,6 +81,9 @@ public final class SimpleConnection extends DBConnection {
         }
     }
 
+    /**
+     * @since 0.1
+     */
     @Override
     public void execUpdate(String sqlCode) throws SQLException {
         try (PreparedStatement preparedStatement = connection.prepareStatement(sqlCode)) {
@@ -85,6 +91,9 @@ public final class SimpleConnection extends DBConnection {
         }
     }
 
+    /**
+     * @since 0.1
+     */
     @Override
     public void close() {
         try {
