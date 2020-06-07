@@ -94,7 +94,7 @@ public final class QueryGenerator {
      */
     @NotNull
     public static String generateCreateTableStatement(
-            SupportedDatabases dbms, String databaseName, TableScheme<?, ?> scheme) {
+            @NotNull SupportedDatabases dbms, @NotNull String databaseName, @NotNull TableScheme<?, ?> scheme) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
@@ -103,7 +103,7 @@ public final class QueryGenerator {
      */
     @NotNull
     public static String generateRequestForColumnNamesAndTypes(
-            SupportedDatabases dbms, String databaseName, TableScheme<?, ?> scheme) {
+            @NotNull SupportedDatabases dbms, @NotNull String databaseName, @NotNull TableScheme<?, ?> scheme) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
@@ -111,7 +111,7 @@ public final class QueryGenerator {
      * @since 0.1
      */
     @NotNull
-    public static String generateRequestForTableNames(SupportedDatabases dbms, String databaseName) {
+    public static String generateRequestForTableNames(@NotNull SupportedDatabases dbms, @NotNull String databaseName) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
@@ -119,7 +119,8 @@ public final class QueryGenerator {
      * @since 0.1
      */
     @NotNull
-    public static String generateRequestForExistenceOfDatabase(SupportedDatabases dbms, String databaseName) {
+    public static String generateRequestForExistenceOfDatabase(
+            @NotNull SupportedDatabases dbms,@NotNull String databaseName) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 

@@ -39,9 +39,9 @@ public abstract class DBConnection implements AutoCloseable {
     /**
      * @since 0.1
      */
-    public DBConnection(String databaseName, SupportedDatabases dbms) {
-        this.databaseName = databaseName;
-        this.dbms = dbms;
+    public DBConnection(@NotNull String databaseName, @NotNull SupportedDatabases dbms) {
+        this.databaseName = Objects.requireNonNull(databaseName);
+        this.dbms = Objects.requireNonNull(dbms);
 
         columnsCache = new PopulatingMap<>(tableScheme -> {
             if (tableScheme == null) {
@@ -83,7 +83,8 @@ public abstract class DBConnection implements AutoCloseable {
      * @throws SQLException Thrown if the sql code is invalid.
      * @since 0.1
      */
-    public abstract List<List<String>> execQuery(String sqlCode) throws SQLException;
+    @NotNull
+    public abstract List<List<String>> execQuery(@NotNull String sqlCode) throws SQLException;
 
     /**
      * Executes a command like INSERT INTO, UPDATE or CREATE.
@@ -92,7 +93,7 @@ public abstract class DBConnection implements AutoCloseable {
      * @throws SQLException Thrown if the sql code is invalid.
      * @since 0.1
      */
-    public abstract void execUpdate(String sqlCode) throws SQLException;
+    public abstract void execUpdate(@NotNull String sqlCode) throws SQLException;
 
     private void populateTablesCache() {
         synchronized (tablesCache) {
@@ -137,7 +138,7 @@ public abstract class DBConnection implements AutoCloseable {
      * @return {@code true} only if the given table exist.
      * @since 0.1
      */
-    public boolean tableExists(TableScheme<?, ?> tableScheme) {
+    public boolean tableExists(@NotNull TableScheme<?, ?> tableScheme) {
         populateTablesCache();
         return tablesCache.contains(tableScheme.getTableName());
     }
@@ -145,7 +146,7 @@ public abstract class DBConnection implements AutoCloseable {
     /**
      * @since 0.1
      */
-    public void createTableIfNotExists(TableScheme<?, ?> scheme) throws SchemeCreationException {
+    public void createTableIfNotExists(@NotNull TableScheme<?, ?> scheme) throws SchemeCreationException {
         if (!tableExists(scheme)) {
             //FIXME Check rights for creating tables
             try {
@@ -164,7 +165,7 @@ public abstract class DBConnection implements AutoCloseable {
      * @return The table to request all data from.
      * @since 0.1
      */
-    public <T> T getTableContent(TableScheme<T, ?> tableScheme) {
+    public <T> T getTableContent(@NotNull TableScheme<T, ?> tableScheme) {
         Optional<String> missingColumns = getMissingColumnsString(tableScheme);
         if (missingColumns.isPresent()) {
             throw new IllegalStateException("The table scheme misses columns: " + missingColumns);
@@ -194,7 +195,8 @@ public abstract class DBConnection implements AutoCloseable {
      * mapping invalid tables to the required columns missing.
      * @since 0.1
      */
-    public List<SimpleColumnPattern<?, ?>> getMissingColumns(TableScheme<?, ?> scheme) {
+    @NotNull
+    public List<SimpleColumnPattern<?, ?>> getMissingColumns(@NotNull TableScheme<?, ?> scheme) {
         List<Column<?>> cachedColumns = columnsCache.get(scheme);
         return scheme.getRequiredColumns()
                 .stream()
@@ -206,7 +208,8 @@ public abstract class DBConnection implements AutoCloseable {
      * @see #getMissingColumns(TableScheme)
      * @since 0.1
      */
-    public Optional<String> getMissingColumnsString(TableScheme<?, ?> scheme) {
+    @NotNull
+    public Optional<String> getMissingColumnsString(@NotNull TableScheme<?, ?> scheme) {
         List<SimpleColumnPattern<?, ?>> missingColumns = getMissingColumns(scheme);
         Optional<String> missingColumnsString;
         if (missingColumns.isEmpty()) {
@@ -230,7 +233,8 @@ public abstract class DBConnection implements AutoCloseable {
      * @see TableScheme#getAllColumns()
      * @since 0.1
      */
-    public List<Column<?>> getAllColumns(TableScheme<?, ?> tableScheme) {
+    @NotNull
+    public List<Column<?>> getAllColumns(@NotNull TableScheme<?, ?> tableScheme) {
         return columnsCache.get(tableScheme);
     }
 
@@ -240,6 +244,7 @@ public abstract class DBConnection implements AutoCloseable {
      * @return All available table names of accessible over this connection.
      * @since 0.1
      */
+    @NotNull
     public Set<String> getAllTables() {
         populateTablesCache();
         return tablesCache;
@@ -248,6 +253,7 @@ public abstract class DBConnection implements AutoCloseable {
     /**
      * @since 0.1
      */
+    @NotNull
     public String getDatabaseName() {
         return databaseName;
     }

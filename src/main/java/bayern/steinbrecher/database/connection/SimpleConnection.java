@@ -2,6 +2,7 @@ package bayern.steinbrecher.database.connection;
 
 import bayern.steinbrecher.database.SupportedDatabases;
 import bayern.steinbrecher.database.connection.credentials.SimpleCredentials;
+import org.jetbrains.annotations.NotNull;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -12,6 +13,7 @@ import java.sql.SQLSyntaxErrorException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -29,10 +31,11 @@ public final class SimpleConnection extends DBConnection {
     /**
      * @since 0.1
      */
-    public SimpleConnection(SupportedDatabases dbms, String databaseHost, int databasePort, String databaseName,
-                            SimpleCredentials credentials) throws AuthException, DatabaseNotFoundException {
+    public SimpleConnection(@NotNull SupportedDatabases dbms, @NotNull String databaseHost, int databasePort,
+                            @NotNull String databaseName, @NotNull SimpleCredentials credentials)
+            throws AuthException, DatabaseNotFoundException {
         super(databaseName, dbms);
-        String databaseHostPrefix = databaseHost;
+        String databaseHostPrefix = Objects.requireNonNull(databaseHost);
         if (databaseHostPrefix.endsWith("/")) {
             databaseHostPrefix = databaseHostPrefix.substring(0, databaseHostPrefix.length() - 1);
         }
@@ -58,8 +61,9 @@ public final class SimpleConnection extends DBConnection {
     /**
      * @since 0.1
      */
+    @NotNull
     @Override
-    public List<List<String>> execQuery(String sqlCode) throws SQLException {
+    public List<List<String>> execQuery(@NotNull String sqlCode) throws SQLException {
         try (PreparedStatement preparedStatement = connection.prepareStatement(sqlCode);
              ResultSet resultset = preparedStatement.executeQuery()) {
             List<List<String>> resultTable = new ArrayList<>();
@@ -85,7 +89,7 @@ public final class SimpleConnection extends DBConnection {
      * @since 0.1
      */
     @Override
-    public void execUpdate(String sqlCode) throws SQLException {
+    public void execUpdate(@NotNull String sqlCode) throws SQLException {
         try (PreparedStatement preparedStatement = connection.prepareStatement(sqlCode)) {
             preparedStatement.executeUpdate();
         }

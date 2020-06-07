@@ -199,7 +199,7 @@ public enum SupportedDatabases {
         }
 
         @Override
-        public int compareTo(SQLTypeKeyword other) {
+        public int compareTo(@NotNull SQLTypeKeyword other) {
             return keyword.compareToIgnoreCase(other.keyword);
         }
 

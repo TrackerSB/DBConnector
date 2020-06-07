@@ -36,17 +36,11 @@ public class TableScheme<T, E> {
     public TableScheme(@NotNull String tableName, @NotNull Collection<SimpleColumnPattern<?, E>> requiredColumns,
                        @NotNull Collection<ColumnPattern<?, E>> optionalColumns,
                        @NotNull Supplier<E> emptyEntrySupplier, @NotNull Function<Stream<E>, T> reducer) {
-        Objects.requireNonNull(tableName);
-        Objects.requireNonNull(requiredColumns);
-        Objects.requireNonNull(optionalColumns);
-        Objects.requireNonNull(emptyEntrySupplier);
-        Objects.requireNonNull(reducer);
-
-        this.tableName = tableName;
-        this.requiredColumns = requiredColumns;
-        this.optionalColumns = optionalColumns;
-        this.emptyEntrySupplier = emptyEntrySupplier;
-        this.reducer = reducer;
+        this.tableName = Objects.requireNonNull(tableName);
+        this.requiredColumns = Objects.requireNonNull(requiredColumns);
+        this.optionalColumns = Objects.requireNonNull(optionalColumns);
+        this.emptyEntrySupplier = Objects.requireNonNull(emptyEntrySupplier);
+        this.reducer = Objects.requireNonNull(reducer);
     }
 
     @NotNull
@@ -57,6 +51,7 @@ public class TableScheme<T, E> {
     /**
      * @since 0.1
      */
+    @NotNull
     public T parseFrom(@NotNull List<List<String>> queryResult) {
         List<String> headings = queryResult.get(0);
         Map<ColumnPattern<?, E>, Collection<Integer>> patternToColumnMapping = streamAllColumns()

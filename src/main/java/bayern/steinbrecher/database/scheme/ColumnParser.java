@@ -25,7 +25,7 @@ public abstract /* final */ class ColumnParser<T> {
     public static final ColumnParser<String> STRING_COLUMN_PARSER = new ColumnParser<>() {
         @Override
         @NotNull
-        public Optional<String> parse(String value) {
+        public Optional<String> parse(@NotNull String value) {
             return Optional.of(value);
         }
 
@@ -52,14 +52,18 @@ public abstract /* final */ class ColumnParser<T> {
     public static final ColumnParser<Integer> INTEGER_COLUMN_PARSER = new ColumnParser<>() {
         @Override
         @NotNull
-        public Optional<Integer> parse(String value) {
+        public Optional<Integer> parse(@Nullable String value) {
             Optional<Integer> parsedValue;
-            try {
-                parsedValue = Optional.of(Integer.parseInt(value));
-            } catch (NumberFormatException ex) {
-                Logger.getLogger(ColumnParser.class.getName())
-                        .log(Level.WARNING, null, ex);
+            if (value == null) {
                 parsedValue = Optional.empty();
+            } else {
+                try {
+                    parsedValue = Optional.of(Integer.parseInt(value));
+                } catch (NumberFormatException ex) {
+                    Logger.getLogger(ColumnParser.class.getName())
+                            .log(Level.WARNING, null, ex);
+                    parsedValue = Optional.empty();
+                }
             }
             return parsedValue;
         }
@@ -76,8 +80,12 @@ public abstract /* final */ class ColumnParser<T> {
     public static final ColumnParser<Boolean> BOOLEAN_COLUMN_PARSER = new ColumnParser<>() {
         @Override
         @NotNull
-        public Optional<Boolean> parse(String value) {
-            return Optional.of("1".equalsIgnoreCase(value));
+        public Optional<Boolean> parse(@Nullable String value) {
+            if (value == null) {
+                return Optional.empty();
+            } else {
+                return Optional.of("1".equalsIgnoreCase(value));
+            }
         }
 
         @Override
@@ -98,7 +106,7 @@ public abstract /* final */ class ColumnParser<T> {
     public static final ColumnParser<LocalDate> LOCALDATE_COLUMN_PARSER = new ColumnParser<>() {
         @Override
         @NotNull
-        public Optional<LocalDate> parse(String value) {
+        public Optional<LocalDate> parse(@Nullable String value) {
             if (value == null) {
                 //NOTE This case was introduced to throw a DateTimeParseException instead of a NPE.
                 throw new DateTimeParseException("Can´t parse null", "null", 0);
@@ -132,14 +140,18 @@ public abstract /* final */ class ColumnParser<T> {
     public static final ColumnParser<Double> DOUBLE_COLUMN_PARSER = new ColumnParser<Double>() {
         @Override
         @NotNull
-        public Optional<Double> parse(String value) {
+        public Optional<Double> parse(@Nullable String value) {
             Optional<Double> parsedValue;
-            try {
-                parsedValue = Optional.of(Double.parseDouble(value));
-            } catch (NumberFormatException ex) {
-                Logger.getLogger(ColumnParser.class.getName())
-                        .log(Level.WARNING, null, ex);
+            if (value == null) {
                 parsedValue = Optional.empty();
+            } else {
+                try {
+                    parsedValue = Optional.of(Double.parseDouble(value));
+                } catch (NumberFormatException ex) {
+                    Logger.getLogger(ColumnParser.class.getName())
+                            .log(Level.WARNING, null, ex);
+                    parsedValue = Optional.empty();
+                }
             }
             return parsedValue;
         }
@@ -160,7 +172,8 @@ public abstract /* final */ class ColumnParser<T> {
      * could not be converted.
      *
      * @param value The value to parse.
-     * @return The typed value represented by {@code value}.
+     * @return The typed value represented by {@code value}. Returns {@link Optional#empty()} if {@code value} is
+     * {@code null}.
      * @since 0.1
      */
     @NotNull

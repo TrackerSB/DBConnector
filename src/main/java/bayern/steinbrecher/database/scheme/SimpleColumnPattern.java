@@ -61,15 +61,11 @@ public class SimpleColumnPattern<T, U> extends ColumnPattern<T, U> {
                                @NotNull ColumnParser<T> parser, @NotNull BiFunction<U, T, U> setter,
                                @NotNull Optional<Optional<T>> defaultValue) {
         super("^\\Q" + realColumnName + "\\E$", parser);
-        Objects.requireNonNull(realColumnName);
-        Objects.requireNonNull(keywords);
-        Objects.requireNonNull(setter);
-        Objects.requireNonNull(defaultValue);
         if (realColumnName.length() < 1) {
             throw new IllegalArgumentException("The column name must have at least a single character");
         }
 
-        Set<TableCreationKeywords> keywordsCopy = new HashSet<>(keywords);
+        Set<TableCreationKeywords> keywordsCopy = new HashSet<>(Objects.requireNonNull(keywords));
         // Make sure DEFAULT keyword is present when a default value is specified.
         if (defaultValue.isPresent()) {
             keywordsCopy.add(TableCreationKeywords.DEFAULT);
@@ -77,7 +73,7 @@ public class SimpleColumnPattern<T, U> extends ColumnPattern<T, U> {
         this.realColumnName = realColumnName;
         this.defaultValue = defaultValue;
         this.keywords = keywordsCopy;
-        this.setter = setter;
+        this.setter = Objects.requireNonNull(setter);
     }
 
     /**

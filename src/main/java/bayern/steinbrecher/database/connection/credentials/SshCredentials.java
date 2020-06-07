@@ -1,5 +1,9 @@
 package bayern.steinbrecher.database.connection.credentials;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
+
 /**
  * @author Stefan Huber
  * @since 0.1
@@ -14,16 +18,18 @@ public class SshCredentials implements DBCredentials {
     /**
      * @since 0.1
      */
-    public SshCredentials(String dbUsername, String dbPassword, String sshUsername, String sshPassword) {
-        this.dbUsername = dbUsername;
-        this.dbPassword = dbPassword;
-        this.sshUsername = sshUsername;
-        this.sshPassword = sshPassword;
+    public SshCredentials(@NotNull String dbUsername, @NotNull String dbPassword, @NotNull String sshUsername,
+                          @NotNull String sshPassword) {
+        this.dbUsername = Objects.requireNonNull(dbUsername);
+        this.dbPassword = Objects.requireNonNull(dbPassword);
+        this.sshUsername = Objects.requireNonNull(sshUsername);
+        this.sshPassword = Objects.requireNonNull(sshPassword);
     }
 
     /**
      * @since 0.1
      */
+    @NotNull
     public String getDbUsername() {
         return dbUsername;
     }
@@ -31,6 +37,7 @@ public class SshCredentials implements DBCredentials {
     /**
      * @since 0.1
      */
+    @NotNull
     public String getDbPassword() {
         return dbPassword;
     }
@@ -38,6 +45,7 @@ public class SshCredentials implements DBCredentials {
     /**
      * @since 0.1
      */
+    @NotNull
     public String getSshUsername() {
         return sshUsername;
     }
@@ -45,6 +53,7 @@ public class SshCredentials implements DBCredentials {
     /**
      * @since 0.1
      */
+    @NotNull
     public String getSshPassword() {
         return sshPassword;
     }

@@ -6,6 +6,7 @@ import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -24,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -71,13 +73,15 @@ public final class SshConnection extends DBConnection {
     /**
      * @since 0.1
      */
-    public SshConnection(SupportedDatabases dbms, String databaseHost, int databasePort, String databaseName,
-            String sshHost, int sshPort, Charset sshCharset, SshCredentials credentials)
+    public SshConnection(@NotNull SupportedDatabases dbms, @NotNull String databaseHost, int databasePort,
+                         @NotNull String databaseName, @NotNull String sshHost, int sshPort,
+                         @NotNull Charset sshCharset, @NotNull SshCredentials credentials)
             throws AuthException, UnknownHostException, UnsupportedDatabaseException {
         super(databaseName, dbms);
         this.dbms = dbms;
-        this.sshSession = createSshSession(credentials, sshHost, sshPort);
-        this.charset = sshCharset;
+        this.sshSession = createSshSession(
+                Objects.requireNonNull(credentials), Objects.requireNonNull(sshHost), sshPort);
+        this.charset = Objects.requireNonNull(sshCharset);
 
         //NOTE The echo command is needed for handling UTF8 chars on non UTF8 terminals.
         sqlCommands.put(dbms, query -> "echo -e '" + escapeSingleQuotes(replaceNonAscii(query))
@@ -86,7 +90,7 @@ public final class SshConnection extends DBConnection {
                 + " --default-character-set=utf8"
                 + " -u" + credentials.getDbUsername()
                 + " -p" + credentials.getDbPassword()
-                + " -h" + databaseHost
+                + " -h" + Objects.requireNonNull(databaseHost)
                 + " -P" + databasePort
                 + " " + databaseName);
 
@@ -97,7 +101,7 @@ public final class SshConnection extends DBConnection {
             try {
                 result = execCommand(
                         "command -v " + COMMANDS.get(dbms) + " >/dev/null 2>&1 || { echo \"Not installed\"; }");
-            } catch (CommandException ex) {
+            } catch (CommandException | IOException ex) {
                 throw new UnsupportedDatabaseException(
                         "The command to check existence of the correct database failed.", ex);
             }
@@ -126,11 +130,13 @@ public final class SshConnection extends DBConnection {
      * @param nonEscaped The {@link String} whose single quotes to escape.
      * @return The {@link String} who can be quoted in single quotes itself.
      */
-    private static String escapeSingleQuotes(String nonEscaped) {
+    @NotNull
+    private static String escapeSingleQuotes(@NotNull String nonEscaped) {
         return nonEscaped.replace("'", "'\"'\"'");
     }
 
-    private String replaceNonAscii(String nonAscii) {
+    @NotNull
+    private String replaceNonAscii(@NotNull String nonAscii) {
         StringBuilder ascii = new StringBuilder();
         nonAscii.chars()
                 .forEach(codePoint -> {
@@ -153,7 +159,8 @@ public final class SshConnection extends DBConnection {
         return ascii.toString();
     }
 
-    private Session createSshSession(SshCredentials credentials, String sshHost, int sshPort)
+    @NotNull
+    private Session createSshSession(@NotNull SshCredentials credentials, @NotNull String sshHost, int sshPort)
             throws AuthException {
         try {
             Session session = new JSch().getSession(credentials.getSshUsername(), sshHost, sshPort);
@@ -165,41 +172,37 @@ public final class SshConnection extends DBConnection {
         }
     }
 
-    private String execCommand(String command) throws JSchException, CommandException {
+    @NotNull
+    private String execCommand(@NotNull String command) throws JSchException, CommandException, IOException {
         String result;
-        try {
-            ChannelExec channel = (ChannelExec) sshSession.openChannel("exec");
-            ByteArrayOutputStream errStream = new ByteArrayOutputStream();
-            channel.setErrStream(errStream);
-            channel.setInputStream(null);
-            channel.setCommand(command);
-            InputStream inStream = channel.getInputStream();
+        ChannelExec channel = (ChannelExec) sshSession.openChannel("exec");
+        ByteArrayOutputStream errStream = new ByteArrayOutputStream();
+        channel.setErrStream(errStream);
+        channel.setInputStream(null);
+        channel.setCommand(command);
+        InputStream inStream = channel.getInputStream();
 
-            channel.connect();
+        channel.connect();
 
-            String errorMessage = errStream.toString(charset.name());
-            if (errorMessage.toLowerCase(Locale.ROOT).contains("error")) {
-                throw new CommandException("The given command returned following error:\n" + errorMessage);
-            }
-
-            StringBuilder output = new StringBuilder();
-            try (ReadableByteChannel rbc = Channels.newChannel(inStream)) {
-                ByteBuffer byteBuffer = ByteBuffer.allocate(SSH_MSG_BUFFER_SIZE);
-                CharBuffer charBuffer;
-                while (rbc.read(byteBuffer) != -1) {
-                    byteBuffer.flip();
-                    charBuffer = charset.decode(byteBuffer);
-                    output.append(charBuffer);
-                    byteBuffer.clear();
-                }
-            }
-            result = output.toString();
-
-            channel.disconnect();
-        } catch (IOException ex) {
-            LOGGER.log(Level.SEVERE, null, ex);
-            result = null;
+        String errorMessage = errStream.toString(charset.name());
+        if (errorMessage.toLowerCase(Locale.ROOT).contains("error")) {
+            throw new CommandException("The given command returned following error:\n" + errorMessage);
         }
+
+        StringBuilder output = new StringBuilder();
+        try (ReadableByteChannel rbc = Channels.newChannel(inStream)) {
+            ByteBuffer byteBuffer = ByteBuffer.allocate(SSH_MSG_BUFFER_SIZE);
+            CharBuffer charBuffer;
+            while (rbc.read(byteBuffer) != -1) {
+                byteBuffer.flip();
+                charBuffer = charset.decode(byteBuffer);
+                output.append(charBuffer);
+                byteBuffer.clear();
+            }
+        }
+        result = output.toString();
+
+        channel.disconnect();
 
         return result;
     }
@@ -209,32 +212,32 @@ public final class SshConnection extends DBConnection {
     }
 
     @Override
-    public List<List<String>> execQuery(String sqlCode) throws SQLException {
+    @NotNull
+    public List<List<String>> execQuery(@NotNull String sqlCode) throws SQLException {
         LOGGER.log(Level.FINE, "Execute query: \"{0}\"", sqlCode);
         String result;
         try {
-            result = execCommand(generateQueryCommand(sqlCode));
-        } catch (JSchException | CommandException ex) {
+            result = execCommand(generateQueryCommand(Objects.requireNonNull(sqlCode)));
+        } catch (JSchException | CommandException | IOException ex) {
             throw new SQLException(ex);
         }
         LOGGER.log(Level.FINE, "Query result:\n{0}", result);
         String[] rows = result.split("\n");
-        List<List<String>> resultTable = Arrays.stream(rows)
+
+        return Arrays.stream(rows)
                 .map(row -> splitUp(row, '\t'))
                 .map(rowFields -> rowFields.stream()
-                .map(f -> "0000-00-00".equals(f) ? null : f)
-                .map(f -> (f == null || "NULL".equalsIgnoreCase(f)) ? null : f)
-                .collect(Collectors.toList()))
+                        .map(f -> "0000-00-00".equals(f) ? null : f)
+                        .map(f -> (f == null || "NULL".equalsIgnoreCase(f)) ? null : f)
+                        .collect(Collectors.toList()))
                 .collect(Collectors.toList());
-
-        return resultTable;
     }
 
     @Override
-    public void execUpdate(String sqlCode) throws SQLException {
+    public void execUpdate(@NotNull String sqlCode) throws SQLException {
         try {
-            execCommand(generateQueryCommand(sqlCode));
-        } catch (JSchException | CommandException ex) {
+            execCommand(generateQueryCommand(Objects.requireNonNull(sqlCode)));
+        } catch (JSchException | CommandException | IOException ex) {
             throw new SQLException(ex);
         }
     }
@@ -244,7 +247,8 @@ public final class SshConnection extends DBConnection {
      * two or more regex are right in a row an empty {@link String} will be added. (This is the main difference to
      * {@link String#split(String)})
      */
-    private List<String> splitUp(String row, char regex) {
+    @NotNull
+    private List<String> splitUp(@NotNull String row, char regex) {
         List<String> columns = new ArrayList<>();
         StringBuilder lastCol = new StringBuilder();
         for (char c : row.toCharArray()) {
