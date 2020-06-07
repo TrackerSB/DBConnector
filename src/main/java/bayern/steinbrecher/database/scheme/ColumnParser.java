@@ -22,7 +22,7 @@ public abstract /* final */ class ColumnParser<T> {
     /**
      * @since 0.1
      */
-    public static final bayern.steinbrecher.database.scheme.ColumnParser<String> STRING_COLUMN_PARSER = new bayern.steinbrecher.database.scheme.ColumnParser<>() {
+    public static final ColumnParser<String> STRING_COLUMN_PARSER = new ColumnParser<>() {
         @Override
         @NotNull
         public Optional<String> parse(String value) {
@@ -49,7 +49,7 @@ public abstract /* final */ class ColumnParser<T> {
     /**
      * @since 0.1
      */
-    public static final bayern.steinbrecher.database.scheme.ColumnParser<Integer> INTEGER_COLUMN_PARSER = new bayern.steinbrecher.database.scheme.ColumnParser<>() {
+    public static final ColumnParser<Integer> INTEGER_COLUMN_PARSER = new ColumnParser<>() {
         @Override
         @NotNull
         public Optional<Integer> parse(String value) {
@@ -57,7 +57,7 @@ public abstract /* final */ class ColumnParser<T> {
             try {
                 parsedValue = Optional.of(Integer.parseInt(value));
             } catch (NumberFormatException ex) {
-                Logger.getLogger(bayern.steinbrecher.database.scheme.ColumnParser.class.getName())
+                Logger.getLogger(ColumnParser.class.getName())
                         .log(Level.WARNING, null, ex);
                 parsedValue = Optional.empty();
             }
@@ -73,7 +73,7 @@ public abstract /* final */ class ColumnParser<T> {
     /**
      * @since 0.1
      */
-    public static final bayern.steinbrecher.database.scheme.ColumnParser<Boolean> BOOLEAN_COLUMN_PARSER = new bayern.steinbrecher.database.scheme.ColumnParser<>() {
+    public static final ColumnParser<Boolean> BOOLEAN_COLUMN_PARSER = new ColumnParser<>() {
         @Override
         @NotNull
         public Optional<Boolean> parse(String value) {
@@ -95,7 +95,7 @@ public abstract /* final */ class ColumnParser<T> {
     /**
      * @since 0.1
      */
-    public static final bayern.steinbrecher.database.scheme.ColumnParser<LocalDate> LOCALDATE_COLUMN_PARSER = new bayern.steinbrecher.database.scheme.ColumnParser<>() {
+    public static final ColumnParser<LocalDate> LOCALDATE_COLUMN_PARSER = new ColumnParser<>() {
         @Override
         @NotNull
         public Optional<LocalDate> parse(String value) {
@@ -108,7 +108,7 @@ public abstract /* final */ class ColumnParser<T> {
             try {
                 date = LocalDate.parse(value);
             } catch (DateTimeParseException ex) {
-                Logger.getLogger(bayern.steinbrecher.database.scheme.ColumnParser.class.getName())
+                Logger.getLogger(ColumnParser.class.getName())
                         .log(Level.WARNING, value + " is an invalid date", ex);
             }
             return Optional.ofNullable(date);
@@ -129,7 +129,7 @@ public abstract /* final */ class ColumnParser<T> {
     /**
      * @since 0.1
      */
-    public static final bayern.steinbrecher.database.scheme.ColumnParser<Double> DOUBLE_COLUMN_PARSER = new bayern.steinbrecher.database.scheme.ColumnParser<Double>() {
+    public static final ColumnParser<Double> DOUBLE_COLUMN_PARSER = new ColumnParser<Double>() {
         @Override
         @NotNull
         public Optional<Double> parse(String value) {
@@ -137,7 +137,7 @@ public abstract /* final */ class ColumnParser<T> {
             try {
                 parsedValue = Optional.of(Double.parseDouble(value));
             } catch (NumberFormatException ex) {
-                Logger.getLogger(bayern.steinbrecher.database.scheme.ColumnParser.class.getName())
+                Logger.getLogger(ColumnParser.class.getName())
                         .log(Level.WARNING, null, ex);
                 parsedValue = Optional.empty();
             }
