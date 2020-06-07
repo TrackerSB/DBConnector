@@ -47,8 +47,9 @@ public abstract class ColumnPattern<T, U> {
     /**
      * @since 0.1
      */
-    public boolean matches(String columnName) {
-        return getColumnNamePattern().matcher(columnName)
+    public boolean matches(@NotNull String columnName) {
+        return getColumnNamePattern()
+                .matcher(Objects.requireNonNull(columnName))
                 .matches();
     }
 
@@ -84,6 +85,7 @@ public abstract class ColumnPattern<T, U> {
     }
 
     /**
+     * @see #combine(Object, String, String)
      * @since 0.1
      */
     public abstract U combineImpl(@NotNull U toSet, @NotNull String columnName, @Nullable String valueToParse);
@@ -97,7 +99,7 @@ public abstract class ColumnPattern<T, U> {
      * @since 0.1
      */
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
         boolean isEqual = false;
         if (obj instanceof bayern.steinbrecher.database.scheme.ColumnPattern) {
             isEqual = ((bayern.steinbrecher.database.scheme.ColumnPattern<?, ?>) obj).getColumnNamePattern()

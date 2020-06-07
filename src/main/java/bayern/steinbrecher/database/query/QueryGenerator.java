@@ -6,6 +6,7 @@ import bayern.steinbrecher.database.scheme.SimpleColumnPattern;
 import bayern.steinbrecher.database.scheme.TableCreationKeywords;
 import bayern.steinbrecher.database.scheme.TableScheme;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -38,7 +39,7 @@ public final class QueryGenerator {
      * @since 0.1
      */
     @NotNull
-    public static String quoteIdentifier(SupportedDatabases dbms, @NotNull String identifier) {
+    public static String quoteIdentifier(@NotNull SupportedDatabases dbms, @NotNull String identifier) {
         return Arrays.stream(identifier.split("\\."))
                 .map(i -> dbms.getIdentifierQuoteSymbol()
                         + i.replaceAll(
@@ -57,7 +58,8 @@ public final class QueryGenerator {
      * @since 0.1
      */
     @NotNull
-    private static String generateCreateLine(SupportedDatabases dbms, @NotNull SimpleColumnPattern<?, ?> column) {
+    private static String generateCreateLine(
+            @NotNull SupportedDatabases dbms, @NotNull SimpleColumnPattern<?, ?> column) {
         String type = dbms.getType(column).orElseThrow(() -> new NoSuchElementException(
                 String.format("%s does not support the type of %s", dbms, column)));
         return Stream.concat(
@@ -90,6 +92,7 @@ public final class QueryGenerator {
     /*
      * @since 0.1
      */
+    @NotNull
     public static String generateCreateTableStatement(
             SupportedDatabases dbms, String databaseName, TableScheme<?, ?> scheme) {
         throw new UnsupportedOperationException("Not implemented yet");
@@ -98,6 +101,7 @@ public final class QueryGenerator {
     /*
      * @since 0.1
      */
+    @NotNull
     public static String generateRequestForColumnNamesAndTypes(
             SupportedDatabases dbms, String databaseName, TableScheme<?, ?> scheme) {
         throw new UnsupportedOperationException("Not implemented yet");
@@ -106,6 +110,7 @@ public final class QueryGenerator {
     /*
      * @since 0.1
      */
+    @NotNull
     public static String generateRequestForTableNames(SupportedDatabases dbms, String databaseName) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
@@ -113,6 +118,7 @@ public final class QueryGenerator {
     /*
      * @since 0.1
      */
+    @NotNull
     public static String generateRequestForExistenceOfDatabase(SupportedDatabases dbms, String databaseName) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
@@ -130,10 +136,12 @@ public final class QueryGenerator {
      * Returns {@link Optional#empty()} if {@code columnsToSelect} contains no column.
      * @since 0.1
      */
+    @NotNull
     // FIXME The method does not tell which conditions were excluded.
-    public static Optional<String> generateSearchQueryFromColumns(SupportedDatabases dbms, String databaseName,
-                                                                  TableScheme<?, ?> tableScheme, Collection<Column<?>> columnsToSelect,
-                                                                  Optional<Collection<String>> conditions) {
+    public static Optional<String> generateSearchQueryFromColumns(
+            @NotNull SupportedDatabases dbms, @NotNull String databaseName,
+            @NotNull TableScheme<?, ?> tableScheme, @NotNull Collection<Column<?>> columnsToSelect,
+            @Nullable Collection<String> conditions) {
         Optional<String> searchQuery;
         if (columnsToSelect.isEmpty()) {
             LOGGER.log(Level.WARNING, "Generating search query without selecting any existing column.");
@@ -148,9 +156,8 @@ public final class QueryGenerator {
                     )
                     .append(" FROM ")
                     .append(quoteIdentifier(dbms, tableScheme.getTableName()));
-            if (conditions.isPresent() && !conditions.get().isEmpty()) {
-                String conditionString = conditions.get()
-                        .stream()
+            if (conditions != null && !conditions.isEmpty()) {
+                String conditionString = conditions.stream()
                         // FIXME This method does not check whether all the column identifiers in any conditions exist.
                         .collect(Collectors.joining(" AND "));
                 sqlString.append(" WHERE ")

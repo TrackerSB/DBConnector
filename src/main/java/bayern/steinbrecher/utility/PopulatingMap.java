@@ -1,5 +1,7 @@
 package bayern.steinbrecher.utility;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -32,7 +34,7 @@ public class PopulatingMap<K, V> extends HashMap<K, V> {
      */
     @Override
     @SuppressWarnings({"element-type-mismatch", "unchecked"})
-    public V get(Object key) {
+    public V get(@NotNull Object key) {
         /*
          * NOTE Use "if containsKey(...)" instead of putIfAbsent(...) since it is lacking lazy evaluation for the second
          * argument.

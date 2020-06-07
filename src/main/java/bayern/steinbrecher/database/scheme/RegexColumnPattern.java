@@ -48,6 +48,7 @@ public class RegexColumnPattern<T, U, K> extends ColumnPattern<T, U> {
     /**
      * @since 0.1
      */
+    @Override
     public U combineImpl(@NotNull U toSet, @NotNull String columnName, @Nullable String valueToParse) {
         K key = keyExtractor.apply(columnName);
         T parsedValue = getParser()

@@ -119,6 +119,7 @@ public class TableScheme<T, E> {
     /**
      * @since 0.1
      */
+    @NotNull
     public Collection<SimpleColumnPattern<?, E>> getRequiredColumns() {
         return requiredColumns;
     }
@@ -126,6 +127,7 @@ public class TableScheme<T, E> {
     /**
      * @since 0.1
      */
+    @NotNull
     public Collection<ColumnPattern<?, E>> getOptionalColumns() {
         return optionalColumns;
     }
