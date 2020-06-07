@@ -136,7 +136,7 @@ public abstract class DBConnection implements AutoCloseable {
      */
     public boolean tableExists(TableScheme<?, ?> tableScheme) {
         populateTablesCache();
-        return tablesCache.contains(tableScheme.getRealTableName());
+        return tablesCache.contains(tableScheme.getTableName());
     }
 
     /**
@@ -148,7 +148,7 @@ public abstract class DBConnection implements AutoCloseable {
             try {
                 execUpdate(QueryGenerator.generateCreateTableStatement(dbms, databaseName, scheme));
             } catch (SQLException ex) {
-                throw new SchemeCreationException("Could not create table " + scheme.getRealTableName(), ex);
+                throw new SchemeCreationException("Could not create table " + scheme.getTableName(), ex);
             }
         }
     }
@@ -176,7 +176,7 @@ public abstract class DBConnection implements AutoCloseable {
                     throw new Error("Generated SQL-Code invalid", ex); //NOPMD - Indicates bug in hardcoded SQL.
                 }
             } else {
-                throw new Error("The cache of the columns of the table " + tableScheme.getRealTableName()
+                throw new Error("The cache of the columns of the table " + tableScheme.getTableName()
                         + " contains no columns that are part of the actual table.");
             }
             return tableContent;
@@ -209,7 +209,7 @@ public abstract class DBConnection implements AutoCloseable {
         if (missingColumns.isEmpty()) {
             missingColumnsString = Optional.empty();
         } else {
-            missingColumnsString = Optional.of(scheme.getRealTableName() + ": "
+            missingColumnsString = Optional.of(scheme.getTableName() + ": "
                     + missingColumns.parallelStream()
                     .map(SimpleColumnPattern::getRealColumnName)
                     .sorted()

@@ -147,7 +147,7 @@ public final class QueryGenerator {
                                     .collect(Collectors.joining(", "))
                     )
                     .append(" FROM ")
-                    .append(quoteIdentifier(dbms, tableScheme.getRealTableName()));
+                    .append(quoteIdentifier(dbms, tableScheme.getTableName()));
             if (conditions.isPresent() && !conditions.get().isEmpty()) {
                 String conditionString = conditions.get()
                         .stream()

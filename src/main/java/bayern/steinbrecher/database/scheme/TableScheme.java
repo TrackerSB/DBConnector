@@ -27,22 +27,22 @@ import java.util.stream.Stream;
  */
 public class TableScheme<T, E> {
     private static final Logger LOGGER = Logger.getLogger(TableScheme.class.getName());
-    private final String realTableName;
+    private final String tableName;
     private final Collection<SimpleColumnPattern<?, E>> requiredColumns;
     private final Collection<ColumnPattern<?, E>> optionalColumns;
     private final Supplier<E> emptyEntrySupplier;
     private final Function<Stream<E>, T> reducer;
 
-    public TableScheme(@NotNull String realTableName, @NotNull Collection<SimpleColumnPattern<?, E>> requiredColumns,
+    public TableScheme(@NotNull String tableName, @NotNull Collection<SimpleColumnPattern<?, E>> requiredColumns,
                        @NotNull Collection<ColumnPattern<?, E>> optionalColumns,
                        @NotNull Supplier<E> emptyEntrySupplier, @NotNull Function<Stream<E>, T> reducer) {
-        Objects.requireNonNull(realTableName);
+        Objects.requireNonNull(tableName);
         Objects.requireNonNull(requiredColumns);
         Objects.requireNonNull(optionalColumns);
         Objects.requireNonNull(emptyEntrySupplier);
         Objects.requireNonNull(reducer);
 
-        this.realTableName = realTableName;
+        this.tableName = tableName;
         this.requiredColumns = requiredColumns;
         this.optionalColumns = optionalColumns;
         this.emptyEntrySupplier = emptyEntrySupplier;
@@ -78,7 +78,7 @@ public class TableScheme<T, E> {
                 .stream()
                 .flatMap(Collection::stream)
                 .allMatch(mappedTargetIndices::add)) {
-            throw new IllegalStateException("Table " + getRealTableName() + " contains intersecting column patterns.");
+            throw new IllegalStateException("Table " + getTableName() + " contains intersecting column patterns.");
         }
 
         return reducer.apply(queryResult.stream()
@@ -92,7 +92,7 @@ public class TableScheme<T, E> {
                         if (targetIndices.size() <= 0) {
                             LOGGER.log(Level.WARNING,
                                     "Pattern {0} is registered for {1} but there is no matching column",
-                                    new Object[]{pattern.getColumnNamePattern().pattern(), getRealTableName()});
+                                    new Object[]{pattern.getColumnNamePattern().pattern(), getTableName()});
                         }
                         if (pattern instanceof SimpleColumnPattern<?, ?>
                                 && targetIndices.size() > 1) { //NOPMD - Check whether association is ambiguous.
@@ -111,8 +111,9 @@ public class TableScheme<T, E> {
     /**
      * @since 0.1
      */
-    public String getRealTableName() {
-        return realTableName;
+    @NotNull
+    public String getTableName() {
+        return tableName;
     }
 
     /**
