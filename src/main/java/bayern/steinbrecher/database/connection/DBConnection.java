@@ -168,7 +168,7 @@ public abstract class DBConnection implements AutoCloseable {
         } else {
             T tableContent;
             Optional<String> searchQuery = QueryGenerator.generateSearchQueryFromColumns(
-                    dbms, databaseName, tableScheme, columnsCache.get(tableScheme), Optional.empty());
+                    dbms, databaseName, tableScheme, columnsCache.get(tableScheme), null);
             if (searchQuery.isPresent()) {
                 try {
                     tableContent = tableScheme.parseFrom(execQuery(searchQuery.get()));
