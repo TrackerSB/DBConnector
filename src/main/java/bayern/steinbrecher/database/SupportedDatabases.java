@@ -1,7 +1,6 @@
 package bayern.steinbrecher.database;
 
 import bayern.steinbrecher.database.scheme.ColumnPattern;
-import bayern.steinbrecher.database.scheme.SimpleColumnPattern;
 import bayern.steinbrecher.database.scheme.TableCreationKeywords;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -12,13 +11,11 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author Stefan Huber
@@ -82,39 +79,6 @@ public enum SupportedDatabases {
     }
 
     /**
-     * Returns a line which can be used in a CREATE statement appropriate for this type of database.
-     *
-     * @param column The column for which a line should be created which can be used in CREATE statements.
-     * @return A list of the appropriate SQL keywords for the given ones.
-     * @since 0.1
-     */
-    @NotNull
-    public String generateCreateLine(@NotNull SimpleColumnPattern<?, ?> column) {
-        String realColumnName = column.getRealColumnName();
-        return Stream.concat(
-                Stream.of(realColumnName, getType(column)),
-                column.getKeywords().stream()
-                        .map(keyword -> {
-                            if (this.keywordRepresentations.containsKey(keyword)) {
-                                StringBuilder keywordString = new StringBuilder(this.keywordRepresentations
-                                        .get(keyword));
-                                if (keyword == TableCreationKeywords.DEFAULT) {
-                                    keywordString.append(' ')
-                                            .append(column.getDefaultValueSql());
-                                }
-                                return keywordString;
-                            } else {
-                                Logger.getLogger(SupportedDatabases.class.getName())
-                                        .log(Level.WARNING, "Keyword {0} is not defined by {1}",
-                                                new Object[]{keyword, this});
-                                return null;
-                            }
-                        })
-                        .filter(Objects::nonNull))
-                .collect(Collectors.joining(" "));
-    }
-
-    /**
      * Returns the appropriate SQL keyword for the given keyword representation.
      *
      * @param keyword The keyword to get a database specific keyword for.
@@ -122,13 +86,8 @@ public enum SupportedDatabases {
      * @since 0.1
      */
     @NotNull
-    public String getKeyword(@NotNull TableCreationKeywords keyword) {
-        if (keywordRepresentations.containsKey(keyword)) {
-            return keywordRepresentations.get(keyword);
-        } else {
-            throw new NoSuchElementException(
-                    "For the database " + displayName + " no SQL keyword for keyword " + keyword + " is defined.");
-        }
+    public Optional<String> getKeyword(@NotNull TableCreationKeywords keyword) {
+        return Optional.ofNullable(keywordRepresentations.getOrDefault(keyword, null));
     }
 
     /**
@@ -141,13 +100,7 @@ public enum SupportedDatabases {
      */
     @NotNull
     public Optional<TableCreationKeywords> getKeyword(@NotNull String sqlKeyword) {
-        Optional<TableCreationKeywords> keyword = Optional.ofNullable(keywordRepresentations.inverse().get(sqlKeyword));
-        if (keyword.isEmpty()) {
-            Logger.getLogger(SupportedDatabases.class.getName())
-                    .log(Level.WARNING, "The database {0} does not define a keyword for {1}.",
-                            new Object[]{displayName, sqlKeyword});
-        }
-        return keyword;
+        return Optional.ofNullable(keywordRepresentations.inverse().get(sqlKeyword));
     }
 
     /**
@@ -159,14 +112,10 @@ public enum SupportedDatabases {
      * @since 0.1
      */
     @NotNull
-    public <T> String getType(@NotNull ColumnPattern<T, ?> column) {
+    public <T> Optional<String> getType(@NotNull ColumnPattern<T, ?> column) {
         Class<T> type = column.getParser().getType();
-        if (types.containsKey(type)) {
-            return types.get(type).getSqlTypeKeyword();
-        } else {
-            throw new NoSuchElementException(
-                    "For the database " + displayName + " no SQL type for type " + type + " is defined.");
-        }
+        return Optional.ofNullable(types.getOrDefault(type, null))
+                .map(SQLTypeKeyword::getSqlTypeKeyword);
     }
 
     /**
@@ -179,34 +128,7 @@ public enum SupportedDatabases {
      */
     @NotNull
     public Optional<Class<?>> getType(@NotNull String sqlType) {
-        Optional<Class<?>> type = Optional.ofNullable(types.inverse().get(new SQLTypeKeyword(sqlType)));
-        if (type.isEmpty()) {
-            Logger.getLogger(SupportedDatabases.class.getName())
-                    .log(Level.WARNING, "The database {0} does not define a class for SQL type {1}.",
-                            new Object[]{displayName, sqlType});
-        }
-        return type;
-    }
-
-    /**
-     * Returns the given identifier quoted with the database specific quote symbol. It also escapes occurrences of the
-     * quote symbol within the identifier. NOTE: It is not checked whether the column, table,... described by the
-     * identifier exists somewhere.
-     *
-     * @param identifier The identifier to quote. If an identifier {@code first_part.second_part} contains a dot it is
-     *                   quoted like (e.g. quoted with double quotes) {@code "first_part"."second_part"}.
-     * @return The quoted identifier.
-     * @since 0.1
-     */
-    @NotNull
-    public String quoteIdentifier(@NotNull String identifier) {
-        return Arrays.stream(identifier.split("\\."))
-                .map(
-                        i -> identifierQuoteSymbol
-                                + i.replaceAll(String.valueOf(identifierQuoteSymbol), "\\" + identifierQuoteSymbol)
-                                + identifierQuoteSymbol
-                )
-                .collect(Collectors.joining("."));
+        return Optional.ofNullable(types.inverse().get(new SQLTypeKeyword(sqlType)));
     }
 
     /**
@@ -223,6 +145,13 @@ public enum SupportedDatabases {
      */
     public int getDefaultPort() {
         return defaultPort;
+    }
+
+    /**
+     * @since 0.1
+     */
+    public char getIdentifierQuoteSymbol() {
+        return identifierQuoteSymbol;
     }
 
     /**
@@ -275,9 +204,9 @@ public enum SupportedDatabases {
         }
 
         /**
-         * Returns the SQL type keyword in upper case and appends a comma separated list of parameters in braces.
+         * Returns the SQL type keyword in upper case and appends a comma separated list of parameters in parenthesis.
          *
-         * @return The SQL type keyword in upper case and appends a comma separated list of parameters in braces.
+         * @return The SQL type keyword in upper case and appends a comma separated list of parameters in parenthesis.
          */
         @NotNull
         public String getSqlTypeKeyword() {

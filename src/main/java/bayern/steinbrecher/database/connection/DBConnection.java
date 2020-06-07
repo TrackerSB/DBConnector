@@ -8,7 +8,6 @@ import bayern.steinbrecher.utility.PopulatingMap;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -155,49 +154,6 @@ public abstract class DBConnection implements AutoCloseable {
     }
 
     /**
-     * Returns a {@link String} containing a statement with SELECT, FROM and WHERE, but with no semicolon and no
-     * trailing space at the end. The select statement contains only columns existing and associated with {@code table}.
-     * The where clause excludes conditions references a column contained in {@code columnsToSelect} which do not exist.
-     *
-     * @param tableScheme     The table to select from.
-     * @param columnsToSelect The columns to select if they exist. If it is empty all available columns are queried.
-     * @param conditions      The conditions every row has to satisfy. NOTE Occurrences of identifiers with conditions are
-     *                        not automatically quoted by this method.
-     * @return The statement selecting all columns given in {@code columnsToSelect} satisfying all {@code conditions}.
-     * Returns {@link Optional#empty()} if {@code columnsToSelect} contains no column.
-     * @since 0.1
-     */
-    // FIXME The method does not tell which conditions were excluded.
-    public Optional<String> generateSearchQueryFromColumns(TableScheme<?, ?> tableScheme, Collection<Column<?>> columnsToSelect,
-                                                           Optional<Collection<String>> conditions) {
-        Optional<String> searchQuery;
-        if (columnsToSelect.isEmpty()) {
-            LOGGER.log(Level.WARNING, "Generating search query without selecting any existing column.");
-            searchQuery = Optional.empty();
-        } else {
-            StringBuilder sqlString = new StringBuilder("SELECT ")
-                    .append(
-                            columnsToSelect.stream()
-                                    .map(Column::getName)
-                                    .map(dbms::quoteIdentifier)
-                                    .collect(Collectors.joining(", "))
-                    )
-                    .append(" FROM ")
-                    .append(dbms.quoteIdentifier(tableScheme.getRealTableName()));
-            if (conditions.isPresent() && !conditions.get().isEmpty()) {
-                String conditionString = conditions.get()
-                        .stream()
-                        // FIXME This method does not check whether all the column identifiers in any conditions exist.
-                        .collect(Collectors.joining(" AND "));
-                sqlString.append(" WHERE ")
-                        .append(conditionString);
-            }
-            searchQuery = Optional.of(sqlString.toString());
-        }
-        return searchQuery;
-    }
-
-    /**
      * Returns an object representing all current entries of the given table.
      *
      * @param <T>         The type that represents the whole content of the given table.
@@ -211,8 +167,8 @@ public abstract class DBConnection implements AutoCloseable {
             throw new IllegalStateException("The table scheme misses columns: " + missingColumns);
         } else {
             T tableContent;
-            Optional<String> searchQuery
-                    = generateSearchQueryFromColumns(tableScheme, columnsCache.get(tableScheme), Optional.empty());
+            Optional<String> searchQuery = QueryGenerator.generateSearchQueryFromColumns(
+                    dbms, databaseName, tableScheme, columnsCache.get(tableScheme), Optional.empty());
             if (searchQuery.isPresent()) {
                 try {
                     tableContent = tableScheme.parseFrom(execQuery(searchQuery.get()));
