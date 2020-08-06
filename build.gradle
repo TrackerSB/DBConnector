@@ -48,7 +48,7 @@ publishing {
         }
     }
     publications {
-        mavenScreenSwitcher(MavenPublication) {
+        library(MavenPublication) {
             pom {
                 name = 'DBConnector'
                 description = 'A library which aims to simplify database connections especially if they are over SSH'
@@ -78,5 +78,5 @@ publishing {
 
 signing {
     useGpgCmd()
-    sign publishing.publications.mavenScreenSwitcher
+    sign publishing.publications.library
 }
