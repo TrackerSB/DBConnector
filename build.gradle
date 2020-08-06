@@ -52,7 +52,7 @@ publishing {
             pom {
                 name = 'DBConnector'
                 description = 'A library which aims to simplify database connections especially if they are over SSH'
-                url = 'https://github.com/TrackerSB/DBConnector'
+                url = 'https://steinbrecher.bayern'
                 licenses {
                     license {
                         name = 'The Beer-Ware License (Revision 42)'
@@ -68,7 +68,7 @@ publishing {
                 scm {
                     connection = 'scm:git:git://github.com/TrackerSB/DBConnector.git'
                     developerConnection = 'scm:git:ssh://github.com/TrackerSB/DBConnector.git'
-                    url = 'https://steinbrecher.bayern'
+                    url = 'https://github.com/TrackerSB/DBConnector'
                 }
             }
             from components.java
