@@ -210,6 +210,9 @@ public final class SshConnection extends DBConnection {
         return sqlCommands.get(dbms).apply(sqlCode);
     }
 
+    /**
+     * @since 0.1
+     */
     @Override
     @NotNull
     public List<List<String>> execQuery(@NotNull String sqlCode) throws SQLException {
@@ -232,6 +235,9 @@ public final class SshConnection extends DBConnection {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * @since 0.1
+     */
     @Override
     public void execUpdate(@NotNull String sqlCode) throws SQLException {
         try {
@@ -263,6 +269,9 @@ public final class SshConnection extends DBConnection {
         return columns;
     }
 
+    /**
+     * @since 0.1
+     */
     @Override
     public void close() {
         this.sshSession.disconnect();

@@ -182,6 +182,9 @@ public enum SupportedDatabases {
                     : "";
         }
 
+        /**
+         * @since 0.1
+         */
         @Override
         public boolean equals(@Nullable Object other) {
             boolean areEqual;
@@ -193,11 +196,17 @@ public enum SupportedDatabases {
             return areEqual;
         }
 
+        /**
+         * @since 0.1
+         */
         @Override
         public int hashCode() {
             return keyword.hashCode();
         }
 
+        /**
+         * @since 0.1
+         */
         @Override
         public int compareTo(@NotNull SQLTypeKeyword other) {
             return keyword.compareToIgnoreCase(other.keyword);
@@ -207,6 +216,7 @@ public enum SupportedDatabases {
          * Returns the SQL type keyword in upper case and appends a comma separated list of parameters in parenthesis.
          *
          * @return The SQL type keyword in upper case and appends a comma separated list of parameters in parenthesis.
+         * @since 0.1
          */
         @NotNull
         public String getSqlTypeKeyword() {
