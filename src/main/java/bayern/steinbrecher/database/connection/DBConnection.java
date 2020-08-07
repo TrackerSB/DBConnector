@@ -230,7 +230,6 @@ public abstract class DBConnection implements AutoCloseable {
      *
      * @param tableScheme The table to get the columns for.
      * @return A {@link List} of all existing columns (not only that ones declared in the scheme).
-     * @see TableScheme#getAllColumns()
      * @since 0.1
      */
     @NotNull
