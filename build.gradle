@@ -12,8 +12,8 @@ repositories {
 }
 
 dependencies {
+    implementation "bayern.steinbrecher:jsch:0.1.56"
     implementation "com.google.guava:guava:29.0-jre"
-    implementation "com.jcraft:jsch:0.1.55"
     implementation "org.jetbrains:annotations:19.0.0"
 }
 

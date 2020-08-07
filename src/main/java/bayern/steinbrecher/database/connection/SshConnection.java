@@ -2,10 +2,10 @@ package bayern.steinbrecher.database.connection;
 
 import bayern.steinbrecher.database.SupportedDatabases;
 import bayern.steinbrecher.database.connection.credentials.SshCredentials;
-import com.jcraft.jsch.ChannelExec;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
+import bayern.steinbrecher.jsch.ChannelExec;
+import bayern.steinbrecher.jsch.JSch;
+import bayern.steinbrecher.jsch.JSchException;
+import bayern.steinbrecher.jsch.Session;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;

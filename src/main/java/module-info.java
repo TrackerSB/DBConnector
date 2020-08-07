@@ -6,9 +6,9 @@ module bayern.steinbrecher.DBConnector {
     exports bayern.steinbrecher.database.query;
     exports bayern.steinbrecher.database.scheme;
 
+    requires bayern.steinbrecher.jsch;
     requires com.google.common;
     requires java.logging;
     requires java.sql;
-    requires jsch;
     requires org.jetbrains.annotations;
 }
