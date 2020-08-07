@@ -1,10 +1,9 @@
 module bayern.steinbrecher.DBConnector {
-    exports bayern.steinbrecher.utility;
-    exports bayern.steinbrecher.database;
-    exports bayern.steinbrecher.database.connection;
-    exports bayern.steinbrecher.database.connection.credentials;
-    exports bayern.steinbrecher.database.query;
-    exports bayern.steinbrecher.database.scheme;
+    exports bayern.steinbrecher.dbConnector;
+    exports bayern.steinbrecher.dbConnector.credentials;
+    exports bayern.steinbrecher.dbConnector.query;
+    exports bayern.steinbrecher.dbConnector.scheme;
+    exports bayern.steinbrecher.dbConnector.utility;
 
     requires bayern.steinbrecher.jsch;
     requires com.google.common;

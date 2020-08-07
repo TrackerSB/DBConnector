@@ -1,7 +1,7 @@
-package bayern.steinbrecher.database;
+package bayern.steinbrecher.dbConnector;
 
-import bayern.steinbrecher.database.scheme.ColumnPattern;
-import bayern.steinbrecher.database.scheme.TableCreationKeywords;
+import bayern.steinbrecher.dbConnector.scheme.ColumnPattern;
+import bayern.steinbrecher.dbConnector.scheme.TableCreationKeywords;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import org.jetbrains.annotations.NotNull;

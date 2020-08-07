@@ -1,4 +1,4 @@
-package bayern.steinbrecher.database.scheme;
+package bayern.steinbrecher.dbConnector.scheme;
 
 /**
  * @author Stefan Huber

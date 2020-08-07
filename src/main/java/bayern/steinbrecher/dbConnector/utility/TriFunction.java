@@ -1,4 +1,4 @@
-package bayern.steinbrecher.utility;
+package bayern.steinbrecher.dbConnector.utility;
 
 /**
  * Represents a {@link java.util.function.BiFunction} but accepting three different input parameter.

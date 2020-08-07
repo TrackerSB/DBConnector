@@ -1,31 +1,31 @@
-package bayern.steinbrecher.database.connection;
+package bayern.steinbrecher.dbConnector;
 
 /**
  * @author Stefan Huber
  * @since 0.1
  */
-public class DatabaseNotFoundException extends Exception {
+public class SchemeCreationException extends Exception {
 
     private static final long serialVersionUID = 1L;
 
     /**
      * @since 0.1
      */
-    public DatabaseNotFoundException() {
+    public SchemeCreationException() {
         super();
     }
 
     /**
      * @since 0.1
      */
-    public DatabaseNotFoundException(String message) {
+    public SchemeCreationException(String message) {
         super(message);
     }
 
     /**
      * @since 0.1
      */
-    public DatabaseNotFoundException(String message, Throwable cause) {
+    public SchemeCreationException(String message, Throwable cause) {
         super(message, cause);
     }
 }

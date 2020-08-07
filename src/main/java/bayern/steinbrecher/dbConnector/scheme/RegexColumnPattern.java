@@ -1,6 +1,6 @@
-package bayern.steinbrecher.database.scheme;
+package bayern.steinbrecher.dbConnector.scheme;
 
-import bayern.steinbrecher.utility.TriFunction;
+import bayern.steinbrecher.dbConnector.utility.TriFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

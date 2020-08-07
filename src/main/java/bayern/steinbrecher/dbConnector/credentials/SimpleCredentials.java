@@ -1,4 +1,4 @@
-package bayern.steinbrecher.database.connection.credentials;
+package bayern.steinbrecher.dbConnector.credentials;
 
 import org.jetbrains.annotations.NotNull;
 

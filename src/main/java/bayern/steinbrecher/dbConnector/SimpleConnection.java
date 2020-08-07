@@ -1,7 +1,6 @@
-package bayern.steinbrecher.database.connection;
+package bayern.steinbrecher.dbConnector;
 
-import bayern.steinbrecher.database.SupportedDatabases;
-import bayern.steinbrecher.database.connection.credentials.SimpleCredentials;
+import bayern.steinbrecher.dbConnector.credentials.SimpleCredentials;
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.Connection;

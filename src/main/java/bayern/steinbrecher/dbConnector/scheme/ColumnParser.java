@@ -1,4 +1,4 @@
-package bayern.steinbrecher.database.scheme;
+package bayern.steinbrecher.dbConnector.scheme;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

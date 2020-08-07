@@ -1,10 +1,10 @@
-package bayern.steinbrecher.database.query;
+package bayern.steinbrecher.dbConnector.query;
 
-import bayern.steinbrecher.database.SupportedDatabases;
-import bayern.steinbrecher.database.connection.DBConnection;
-import bayern.steinbrecher.database.scheme.SimpleColumnPattern;
-import bayern.steinbrecher.database.scheme.TableCreationKeywords;
-import bayern.steinbrecher.database.scheme.TableScheme;
+import bayern.steinbrecher.dbConnector.SupportedDatabases;
+import bayern.steinbrecher.dbConnector.DBConnection;
+import bayern.steinbrecher.dbConnector.scheme.SimpleColumnPattern;
+import bayern.steinbrecher.dbConnector.scheme.TableCreationKeywords;
+import bayern.steinbrecher.dbConnector.scheme.TableScheme;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

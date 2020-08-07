@@ -1,11 +1,10 @@
-package bayern.steinbrecher.database.connection;
+package bayern.steinbrecher.dbConnector;
 
-import bayern.steinbrecher.database.SupportedDatabases;
-import bayern.steinbrecher.database.query.QueryGenerator;
-import bayern.steinbrecher.database.scheme.ColumnPattern;
-import bayern.steinbrecher.database.scheme.SimpleColumnPattern;
-import bayern.steinbrecher.database.scheme.TableScheme;
-import bayern.steinbrecher.utility.PopulatingMap;
+import bayern.steinbrecher.dbConnector.query.QueryGenerator;
+import bayern.steinbrecher.dbConnector.scheme.ColumnPattern;
+import bayern.steinbrecher.dbConnector.scheme.SimpleColumnPattern;
+import bayern.steinbrecher.dbConnector.scheme.TableScheme;
+import bayern.steinbrecher.dbConnector.utility.PopulatingMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.SQLException;
