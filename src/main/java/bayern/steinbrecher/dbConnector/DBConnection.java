@@ -257,6 +257,14 @@ public abstract class DBConnection implements AutoCloseable {
     }
 
     /**
+     * @since 0.3
+     */
+    @NotNull
+    public SupportedDatabases getDbms() {
+        return dbms;
+    }
+
+    /**
      * Represents a concrete column that actually exists in an existing database. In contrast {@link ColumnPattern} only
      * represents patterns of column names in a {@link TableScheme}.
      *
