@@ -273,7 +273,8 @@ public abstract class DBConnection implements AutoCloseable {
          * Creates a concrete column that exists in an existing database.
          *
          * @param name       The name of the column.
-         * @param columnType The class of Java objects this column represents. Since this class represents existing columns
+         * @param columnType The class of Java objects this column represents. Since this class represents existing
+         *                   columns
          *                   this type can only be determined at runtime.
          * @since 0.1
          */
