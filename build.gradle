@@ -12,7 +12,7 @@ repositories {
 }
 
 dependencies {
-    implementation "bayern.steinbrecher:jsch:0.1.56"
+    implementation "bayern.steinbrecher:jsch:0.1.57"
     implementation "com.google.guava:guava:29.0-jre"
     implementation "org.jetbrains:annotations:19.0.0"
 }
