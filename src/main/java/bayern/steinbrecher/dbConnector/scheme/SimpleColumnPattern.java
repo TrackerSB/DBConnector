@@ -81,7 +81,7 @@ public class SimpleColumnPattern<T, U> extends ColumnPattern<T, U> {
      */
     @Override
     @NotNull
-    public U combineImpl(@NotNull U toSet, @NotNull String columnName, @Nullable String valueToParse) {
+    protected U combineImpl(@NotNull U toSet, @NotNull String columnName, @Nullable String valueToParse) {
         T parsedValue = getParser()
                 .parse(valueToParse)
                 .orElseThrow(

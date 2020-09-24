@@ -88,7 +88,7 @@ public abstract class ColumnPattern<T, U> {
      * @see #combine(Object, String, String)
      * @since 0.1
      */
-    public abstract U combineImpl(@NotNull U toSet, @NotNull String columnName, @Nullable String valueToParse);
+    protected abstract U combineImpl(@NotNull U toSet, @NotNull String columnName, @Nullable String valueToParse);
 
     /**
      * Checks whether this pattern reflects the same column names as the given object. NOTE It is only checked whether
