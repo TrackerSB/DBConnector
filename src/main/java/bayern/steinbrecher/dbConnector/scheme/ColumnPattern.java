@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  */
 public abstract class ColumnPattern<T, U> {
 
-    private static final Logger LOGGER = Logger.getLogger(bayern.steinbrecher.dbConnector.scheme.ColumnPattern.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ColumnPattern.class.getName());
     private final Pattern columnNamePattern;
     private final ColumnParser<T> parser;
 
@@ -101,8 +101,8 @@ public abstract class ColumnPattern<T, U> {
     @Override
     public boolean equals(@Nullable Object obj) {
         boolean isEqual = false;
-        if (obj instanceof bayern.steinbrecher.dbConnector.scheme.ColumnPattern) {
-            isEqual = ((bayern.steinbrecher.dbConnector.scheme.ColumnPattern<?, ?>) obj).getColumnNamePattern()
+        if (obj instanceof ColumnPattern) {
+            isEqual = ((ColumnPattern<?, ?>) obj).getColumnNamePattern()
                     .pattern()
                     .equals(columnNamePattern.pattern());
         }
