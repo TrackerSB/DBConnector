@@ -105,14 +105,6 @@ public abstract class DBConnection implements AutoCloseable {
         }
     }
 
-    @NotNull
-    private Optional<Table<?, ?>> findTable(@NotNull TableScheme<?, ?> tableScheme) {
-        return getAllTables()
-                .stream()
-                .filter(table -> table.getTableName().equalsIgnoreCase(tableScheme.getTableName()))
-                .findAny();
-    }
-
     /**
      * Returns an object representing all current entries of the given table.
      *
@@ -127,7 +119,7 @@ public abstract class DBConnection implements AutoCloseable {
             T tableContent;
             String searchQuery = getDbms()
                     .getQueryGenerator()
-                    .generateSearchQueryStatement(getDatabaseName(), findTable(tableScheme).orElseThrow(),
+                    .generateSearchQueryStatement(getDatabaseName(), getTable(tableScheme).orElseThrow(),
                             Collections.emptyList(), Collections.emptyList());
             try {
                 tableContent = tableScheme.parseFrom(execQuery(searchQuery));
@@ -160,7 +152,7 @@ public abstract class DBConnection implements AutoCloseable {
      */
     @NotNull
     public Set<Column<?>> getAllColumns(@NotNull TableScheme<?, ?> tableScheme) {
-        return findTable(tableScheme)
+        return getTable(tableScheme)
                 .map(Table::getColumns)
                 .orElseThrow();
     }
@@ -188,10 +180,25 @@ public abstract class DBConnection implements AutoCloseable {
     }
 
     /**
+     * NOTE In theory the generic parameters of input and output have to match. Due to type erasure of generic types
+     * this can not be guaranteed.
+     *
+     * @since 0.6
+     */
+    @NotNull
+    public Optional<Table<?, ?>> getTable(@NotNull TableScheme<?, ?> scheme) {
+        return getAllTables()
+                .stream()
+                .filter(table -> table.getTableName()
+                        .equalsIgnoreCase(Objects.requireNonNull(scheme).getTableName()))
+                .findAny();
+    }
+
+    /**
      * @since 0.1
      */
     public boolean tableExists(@NotNull TableScheme<?, ?> tableScheme) {
-        return findTable(tableScheme)
+        return getTable(tableScheme)
                 .isPresent();
     }
 
