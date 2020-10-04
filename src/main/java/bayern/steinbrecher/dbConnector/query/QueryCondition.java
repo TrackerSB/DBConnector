@@ -27,9 +27,9 @@ public abstract class QueryCondition<T> {
         private final String operator;
 
         protected BinaryQueryCondition(@NotNull Class<T> runtimeGenericTypeProvider,
-                                       Class<Column<T>> runtimeGenericColumnTypeProvider, @NotNull String operator) {
+                                       @NotNull Class<Column<T>> runtimeGenericColumnTypeProvider, @NotNull String operator) {
             this.runtimeGenericTypeProvider = Objects.requireNonNull(runtimeGenericTypeProvider);
-            this.runtimeGenericColumnTypeProvider = runtimeGenericColumnTypeProvider;
+            this.runtimeGenericColumnTypeProvider = Objects.requireNonNull(runtimeGenericColumnTypeProvider);
             this.operator = Objects.requireNonNull(operator);
         }
 
