@@ -7,6 +7,7 @@ module bayern.steinbrecher.DBConnector {
 
     requires bayern.steinbrecher.jsch;
     requires com.google.common;
+    requires org.freemarker;
     requires java.logging;
     requires java.sql;
     requires org.jetbrains.annotations;

@@ -1,6 +1,7 @@
 package bayern.steinbrecher.dbConnector;
 
 import bayern.steinbrecher.dbConnector.credentials.SshCredentials;
+import bayern.steinbrecher.dbConnector.query.SupportedDatabases;
 import bayern.steinbrecher.jsch.ChannelExec;
 import bayern.steinbrecher.jsch.JSch;
 import bayern.steinbrecher.jsch.JSchException;

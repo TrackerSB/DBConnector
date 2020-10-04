@@ -3,10 +3,8 @@ package bayern.steinbrecher.dbConnector.scheme;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.BiFunction;
 
 /**
@@ -22,23 +20,23 @@ public class SimpleColumnPattern<T, U> extends ColumnPattern<T, U> {
 
     private final String realColumnName;
     private final Optional<Optional<T>> defaultValue;
-    private final Set<TableCreationKeywords> keywords;
     private final BiFunction<U, T, U> setter;
+    private final boolean isPrimaryKey;
+    private final boolean allowNull;
 
     /**
      * Creates a new simple column pattern, i.e. a pattern which specifies a specific column name. This constructor may
      * be used if {@link U} is an immutable type.
      *
      * @param realColumnName The exact name of the column to match.
-     * @param keywords       The keywords to specify when creating a column matching this pattern.
      * @param parser         The parser to convert values from and to a SQL representation.
      * @param setter         The function used to set a parsed value to a given object. The setter should only return
      *                       a new object of type {@link U} if the handed in one is immutable.
-     * @since 0.1
+     * @since 0.5
      */
-    public SimpleColumnPattern(@NotNull String realColumnName, @NotNull Set<TableCreationKeywords> keywords,
-                               @NotNull ColumnParser<T> parser, @NotNull BiFunction<U, T, U> setter) {
-        this(realColumnName, keywords, parser, setter, Optional.empty());
+    public SimpleColumnPattern(@NotNull String realColumnName, @NotNull ColumnParser<T> parser,
+                               @NotNull BiFunction<U, T, U> setter) {
+        this(realColumnName, parser, setter, Optional.empty(), false, false);
     }
 
     /**
@@ -46,7 +44,6 @@ public class SimpleColumnPattern<T, U> extends ColumnPattern<T, U> {
      * be used if {@link U} is an immutable type.
      *
      * @param realColumnName The exact name of the column to match.
-     * @param keywords       The keywords to specify when creating a column matching this pattern.
      * @param parser         The parser to convert values from and to a SQL representation.
      * @param setter         The function used to set a parsed value to a given object. The setter should only return
      *                       a new object of type {@link U} if the handed in one is immutable.
@@ -55,25 +52,21 @@ public class SimpleColumnPattern<T, U> extends ColumnPattern<T, U> {
      *                       as default value. Otherwise the value of the inner {@link Optional} represents the default
      *                       value.
      * @see ColumnPattern#ColumnPattern(String, ColumnParser)
-     * @since 0.1
+     * @since 0.5
      */
-    public SimpleColumnPattern(@NotNull String realColumnName, @NotNull Set<TableCreationKeywords> keywords,
-                               @NotNull ColumnParser<T> parser, @NotNull BiFunction<U, T, U> setter,
-                               @NotNull Optional<Optional<T>> defaultValue) {
+    public SimpleColumnPattern(@NotNull String realColumnName, @NotNull ColumnParser<T> parser,
+                               @NotNull BiFunction<U, T, U> setter, @NotNull Optional<Optional<T>> defaultValue,
+                               boolean isPrimaryKey, boolean allowNull) {
         super("^\\Q" + realColumnName + "\\E$", parser);
         if (realColumnName.length() < 1) {
             throw new IllegalArgumentException("The column name must have at least a single character");
         }
 
-        Set<TableCreationKeywords> keywordsCopy = new HashSet<>(Objects.requireNonNull(keywords));
-        // Make sure DEFAULT keyword is present when a default value is specified.
-        if (defaultValue.isPresent()) {
-            keywordsCopy.add(TableCreationKeywords.DEFAULT);
-        }
-        this.realColumnName = realColumnName;
-        this.defaultValue = defaultValue;
-        this.keywords = keywordsCopy;
+        this.realColumnName = Objects.requireNonNull(realColumnName);
+        this.defaultValue = Objects.requireNonNull(defaultValue);
         this.setter = Objects.requireNonNull(setter);
+        this.isPrimaryKey = isPrimaryKey;
+        this.allowNull = allowNull;
     }
 
     /**
@@ -90,6 +83,17 @@ public class SimpleColumnPattern<T, U> extends ColumnPattern<T, U> {
     }
 
     /**
+     * Returns the real column name of this column.
+     *
+     * @return The real column name of this column.
+     * @since 0.1
+     */
+    @NotNull
+    public String getRealColumnName() {
+        return realColumnName;
+    }
+
+    /**
      * Checks whether a default value is set for this column
      *
      * @return {@code true} only if a default value is associated with this column.
@@ -97,21 +101,6 @@ public class SimpleColumnPattern<T, U> extends ColumnPattern<T, U> {
      */
     public boolean hasDefaultValue() {
         return getDefaultValue().isPresent();
-    }
-
-    /**
-     * Returns the {@link String} representation of the default value suitable for SQL.
-     *
-     * @return The {@link String} representation of the default value suitable for SQL. If the default value is
-     * {@code null} the {@link String} "NULL" (without quotes) is returned.
-     * @see #getDefaultValue()
-     * @since 0.1
-     */
-    @NotNull
-    public String getDefaultValueSql() {
-        return getDefaultValue()
-                .map(value -> getParser().toString(value.orElse(null)))
-                .orElseThrow();
     }
 
     /**
@@ -125,25 +114,23 @@ public class SimpleColumnPattern<T, U> extends ColumnPattern<T, U> {
         return defaultValue;
     }
 
-    /**
-     * Returns the real column name of this column.
-     *
-     * @return The real column name of this column.
-     * @since 0.1
-     */
-    @NotNull
-    public String getRealColumnName() {
-        return realColumnName;
+    public String getSQLDefaultValue() {
+        return getDefaultValue()
+                .map(value -> getParser().toString(value.orElse(null)))
+                .orElseThrow();
     }
 
     /**
-     * Returns the SQL keywords associated with columns matching this pattern name.
-     *
-     * @return The SQL keywords associated with columns matching this pattern name.
-     * @since 0.1
+     * @since 0.5
      */
-    @NotNull
-    public Set<TableCreationKeywords> getKeywords() {
-        return keywords;
+    public boolean isPrimaryKey() {
+        return isPrimaryKey;
+    }
+
+    /**
+     * @since 0.5
+     */
+    public boolean isAllowNull() {
+        return allowNull;
     }
 }

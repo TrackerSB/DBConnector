@@ -25,8 +25,8 @@ public abstract /* final */ class ColumnParser<T> {
     public static final ColumnParser<String> STRING_COLUMN_PARSER = new ColumnParser<>() {
         @Override
         @NotNull
-        public Optional<String> parse(@NotNull String value) {
-            return Optional.of(value);
+        public Optional<String> parse(@Nullable String value) {
+            return Optional.ofNullable(value);
         }
 
         @Override

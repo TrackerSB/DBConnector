@@ -1,171 +1,228 @@
 package bayern.steinbrecher.dbConnector.query;
 
-import bayern.steinbrecher.dbConnector.SupportedDatabases;
 import bayern.steinbrecher.dbConnector.DBConnection;
+import bayern.steinbrecher.dbConnector.scheme.ColumnPattern;
 import bayern.steinbrecher.dbConnector.scheme.SimpleColumnPattern;
-import bayern.steinbrecher.dbConnector.scheme.TableCreationKeywords;
 import bayern.steinbrecher.dbConnector.scheme.TableScheme;
+import com.google.common.collect.BiMap;
+import freemarker.core.Environment;
+import freemarker.template.Configuration;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
+import freemarker.template.TemplateExceptionHandler;
+import freemarker.template.TemplateMethodModelEx;
+import freemarker.template.TemplateModelException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.NoSuchElementException;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 // FIXME Instead of returning strings return statement which associates a result type
 // FIXME Should each method also return the required rights for it?
 /*
- * @since 0.1
+ * @since 0.5
  */
-public final class QueryGenerator {
+public class QueryGenerator {
     private static final Logger LOGGER = Logger.getLogger(QueryGenerator.class.getName());
 
-    private QueryGenerator() {
+    private final BiMap<Class<?>, SQLTypeKeyword> types;
+    private final char identifierQuoteSymbol;
+
+    private final Template checkDBExistenceTemplate;
+    private final Template createTableColumnTemplate;
+    private final Template queryTableNamesTemplate;
+    private final Template queryColumnNamesAndTypesTemplate;
+    private final Template searchQueryTemplate;
+
+    // NOTE Allow creation only within {@link SupportedDatabases}
+    QueryGenerator(@NotNull Path templateDirectoryPath, @NotNull BiMap<Class<?>, SQLTypeKeyword> types,
+                   char identifierQuoteSymbol) {
+        this.types = Objects.requireNonNull(types);
+        this.identifierQuoteSymbol = identifierQuoteSymbol;
+
+        Configuration templateConfig = new Configuration(Configuration.VERSION_2_3_30);
+        templateConfig.setDefaultEncoding(StandardCharsets.UTF_8.name());
+        templateConfig.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
+        templateConfig.setLogTemplateExceptions(false);
+        templateConfig.setWrapUncheckedExceptions(true);
+        templateConfig.setFallbackOnNullLoopVariable(false);
+        try {
+            templateConfig.setDirectoryForTemplateLoading(
+                    Objects.requireNonNull(templateDirectoryPath).toFile());
+
+            checkDBExistenceTemplate = templateConfig.getTemplate("checkDBExistence.ftlh");
+            createTableColumnTemplate = templateConfig.getTemplate("createTable.ftlh");
+            queryTableNamesTemplate = templateConfig.getTemplate("queryTableNames.ftlh");
+            queryColumnNamesAndTypesTemplate = templateConfig.getTemplate("queryColumnNamesAndTypes.ftlh");
+            searchQueryTemplate = templateConfig.getTemplate("searchQuery.ftlh");
+        } catch (IOException ex) {
+            throw new ExceptionInInitializerError(ex);
+        }
     }
 
     /**
-     * Returns the given identifier quoted with the database specific quote symbol. It also escapes occurrences of the
-     * quote symbol within the identifier. NOTE: It is not checked whether the column, table,... described by the
-     * identifier exists somewhere.
+     * Returns the class used for representing values of the given SQL type.
      *
-     * @param identifier The identifier to quote. If an identifier {@code first_part.second_part} contains a dot it is
-     *                   quoted like (e.g. quoted with double quotes) {@code "first_part"."second_part"}.
-     * @return The quoted identifier.
-     * @since 0.1
+     * @param sqlType The type to get a class for.
+     * @return An {@link Optional} containing the {@link Class} representing the appropriate SQL type. Returns
+     * {@link Optional#empty()} if and only if for {@code sqlType} no class is defined.
      */
     @NotNull
-    public static String quoteIdentifier(@NotNull SupportedDatabases dbms, @NotNull String identifier) {
+    public Optional<Class<?>> getType(@NotNull String sqlType) {
+        return Optional.ofNullable(types.inverse().get(new SQLTypeKeyword(sqlType)));
+    }
+
+    @NotNull
+    public Optional<String> getType(@NotNull Class<?> columnType) {
+        return Optional.ofNullable(types.get(columnType))
+                .map(SQLTypeKeyword::getSqlTypeKeyword);
+    }
+
+    @NotNull
+    public String quoteIdentifier(@NotNull String identifier) {
         return Arrays.stream(identifier.split("\\."))
-                .map(i -> dbms.getIdentifierQuoteSymbol()
-                        + i.replaceAll(
-                        String.valueOf(dbms.getIdentifierQuoteSymbol()),
-                        "\\" + dbms.getIdentifierQuoteSymbol())
-                        + dbms.getIdentifierQuoteSymbol()
+                .map(i -> identifierQuoteSymbol
+                        + i.replaceAll(String.valueOf(identifierQuoteSymbol), "\\" + identifierQuoteSymbol)
+                        + identifierQuoteSymbol
                 )
                 .collect(Collectors.joining("."));
     }
 
-    /**
-     * Returns a line which can be used in a CREATE statement appropriate for this type of database.
-     *
-     * @param column The column for which a line should be created which can be used in CREATE statements.
-     * @return A list of the appropriate SQL keywords for the given ones.
-     * @since 0.1
-     */
-    @NotNull
-    private static String generateCreateLine(
-            @NotNull SupportedDatabases dbms, @NotNull SimpleColumnPattern<?, ?> column) {
-        String type = dbms.getType(column).orElseThrow(() -> new NoSuchElementException(
-                String.format("%s does not support the type of %s", dbms, column)));
-        return Stream.concat(
-                Stream.of(column.getRealColumnName(), type),
-                column.getKeywords()
-                        .stream()
-                        .map(keyword -> {
-                            Optional<String> dbmsKeyword = dbms.getKeyword(keyword)
-                                    .map(k -> {
-                                        String outCreateElement;
-                                        if (keyword == TableCreationKeywords.DEFAULT) {
-                                            outCreateElement = k + " " + column.getDefaultValueSql();
-                                        } else {
-                                            outCreateElement = k;
-                                        }
-                                        return outCreateElement;
-                                    });
-                            if (dbmsKeyword.isEmpty()) {
-                                Logger.getLogger(SupportedDatabases.class.getName())
-                                        .log(Level.WARNING, "Keyword {0} is not defined by {1}",
-                                                new Object[]{keyword, dbms});
-                            }
-                            return dbmsKeyword;
-                        })
-                        .filter(Optional::isPresent)
-                        .map(Optional::get))
-                .collect(Collectors.joining(" "));
-    }
-
-    /*
-     * @since 0.1
-     */
-    @NotNull
-    public static String generateCreateTableStatement(
-            @NotNull SupportedDatabases dbms, @NotNull String databaseName, @NotNull TableScheme<?, ?> scheme) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    /*
-     * @since 0.1
-     */
-    @NotNull
-    public static String generateRequestForColumnNamesAndTypes(
-            @NotNull SupportedDatabases dbms, @NotNull String databaseName, @NotNull TableScheme<?, ?> scheme) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    /*
-     * @since 0.1
-     */
-    @NotNull
-    public static String generateRequestForTableNames(@NotNull SupportedDatabases dbms, @NotNull String databaseName) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    /*
-     * @since 0.1
-     */
-    @NotNull
-    public static String generateRequestForExistenceOfDatabase(
-            @NotNull SupportedDatabases dbms,@NotNull String databaseName) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    /**
-     * Returns a {@link String} containing a statement with SELECT, FROM and WHERE, but with no semicolon and no
-     * trailing space at the end. The select statement contains only columns existing and associated with {@code table}.
-     * The where clause excludes conditions references a column contained in {@code columnsToSelect} which do not exist.
-     *
-     * @param tableScheme     The table to select from.
-     * @param columnsToSelect The columns to select if they exist. If it is empty all available columns are queried.
-     * @param conditions      The conditions every row has to satisfy. NOTE Occurrences of identifiers with conditions are
-     *                        not automatically quoted by this method.
-     * @return The statement selecting all columns given in {@code columnsToSelect} satisfying all {@code conditions}.
-     * Returns {@link Optional#empty()} if {@code columnsToSelect} contains no column.
-     * @since 0.1
-     */
-    @NotNull
-    // FIXME The method does not tell which conditions were excluded.
-    public static Optional<String> generateSearchQueryFromColumns(
-            @NotNull SupportedDatabases dbms, @NotNull String databaseName,
-            @NotNull TableScheme<?, ?> tableScheme, @NotNull Collection<DBConnection.Column<?>> columnsToSelect,
-            @Nullable Collection<String> conditions) {
-        Optional<String> searchQuery;
-        if (columnsToSelect.isEmpty()) {
-            LOGGER.log(Level.WARNING, "Generating search query without selecting any existing column.");
-            searchQuery = Optional.empty();
-        } else {
-            StringBuilder sqlString = new StringBuilder("SELECT ")
-                    .append(
-                            columnsToSelect.stream()
-                                    .map(DBConnection.Column::getName)
-                                    .map(name -> quoteIdentifier(dbms, name))
-                                    .collect(Collectors.joining(", "))
-                    )
-                    .append(" FROM ")
-                    .append(quoteIdentifier(dbms, tableScheme.getTableName()));
-            if (conditions != null && !conditions.isEmpty()) {
-                String conditionString = conditions.stream()
-                        // FIXME This method does not check whether all the column identifiers in any conditions exist.
-                        .collect(Collectors.joining(" AND "));
-                sqlString.append(" WHERE ")
-                        .append(conditionString);
-            }
-            searchQuery = Optional.of(sqlString.toString());
+    private String populateTemplate(Template template, Object dataModel) throws GenerationFailedException {
+        try (StringWriter writer = new StringWriter()) {
+            Environment processingEnvironment = template.createProcessingEnvironment(dataModel, writer);
+            processingEnvironment.setVariable("quoteIdentifier", new QuoteIdentifierMethod());
+            processingEnvironment.setVariable("getSQLType", new GetSQLTypeMethod());
+            processingEnvironment.setVariable("getSQLDefaultValue", new GetSQLDefaultValueMethod());
+            processingEnvironment.process();
+            return writer.toString();
+        } catch (TemplateException | IOException ex) {
+            throw new GenerationFailedException("Could not populate template with data", ex);
         }
-        return searchQuery;
+    }
+
+    @NotNull
+    public String generateCheckDatabaseExistenceStatement(@NotNull String dbName) throws GenerationFailedException {
+        return populateTemplate(checkDBExistenceTemplate, Map.of("dbName", Objects.requireNonNull(dbName)));
+    }
+
+    @NotNull
+    public String generateCreateTableStatement(@NotNull String dbName, @NotNull TableScheme<?, ?> tableScheme)
+            throws GenerationFailedException {
+        return populateTemplate(createTableColumnTemplate, Map.of(
+                "dbName", dbName,
+                "tableScheme", Objects.requireNonNull(tableScheme)
+        ));
+    }
+
+    @NotNull
+    public String generateQueryTableNamesStatement(@NotNull String dbName) throws GenerationFailedException {
+        return populateTemplate(queryTableNamesTemplate, Map.of("dbName", Objects.requireNonNull(dbName)));
+    }
+
+    @NotNull
+    public String generateQueryColumnNamesAndTypesStatement(
+            @NotNull String dbName, @NotNull DBConnection.Table<?, ?> table) throws GenerationFailedException {
+        return populateTemplate(
+                queryColumnNamesAndTypesTemplate, Map.of(
+                        "dbName", Objects.requireNonNull(dbName),
+                        "table", Objects.requireNonNull(table)
+                ));
+    }
+
+    /**
+     * @param columnsToSelect If empty all columns are selected ({@code SELECT *}).
+     * @param conditions      List of conditions which is combined as conjunction.
+     */
+    @NotNull
+    public String generateSearchQueryStatement(@NotNull String dbName, @NotNull DBConnection.Table<?, ?> table,
+                                               @NotNull Iterable<DBConnection.Column<?>> columnsToSelect,
+                                               @NotNull Iterable<QueryCondition<?>> conditions)
+            throws GenerationFailedException {
+        // FIXME Check whether any involved columns are contained by the specified table
+        return populateTemplate(
+                searchQueryTemplate, Map.of(
+                        "dbName", Objects.requireNonNull(dbName),
+                        "table", Objects.requireNonNull(table),
+                        "columnsToSelect", Objects.requireNonNull(columnsToSelect),
+                        "conditions", Objects.requireNonNull(conditions)
+                ));
+    }
+
+    private class QuoteIdentifierMethod implements TemplateMethodModelEx {
+
+        @Override
+        public Object exec(List arguments) throws TemplateModelException {
+            if (arguments.isEmpty()) {
+                throw new TemplateModelException("The identifier to quote is missing");
+            } else {
+                Object identifierCandidate = arguments.get(0);
+                if (identifierCandidate instanceof String) {
+                    return quoteIdentifier((String) identifierCandidate);
+                } else {
+                    throw new TemplateModelException(
+                            "The given argument is not of type " + String.class.getSimpleName());
+                }
+            }
+        }
+    }
+
+    private class GetSQLTypeMethod implements TemplateMethodModelEx {
+
+        @Override
+        public String exec(List arguments) throws TemplateModelException {
+            if (arguments.isEmpty()) {
+                throw new TemplateModelException("The parameter for the column to get its type from is missing");
+            } else {
+                Object columnPatternCandidate = arguments.get(0);
+                if (columnPatternCandidate instanceof ColumnPattern) {
+                    ColumnPattern<?, ?> columnPattern = (ColumnPattern<?, ?>) columnPatternCandidate;
+                    Class<?> columnType = columnPattern.getParser()
+                            .getType();
+                    return getType(columnType)
+                            .orElseThrow(
+                                    () -> new TemplateModelException(
+                                            "No SQL type for " + columnType.getSimpleName() + " available"));
+                } else {
+                    throw new TemplateModelException(
+                            "The given argument is not of type " + ColumnPattern.class.getSimpleName());
+                }
+            }
+        }
+    }
+
+    private static class GetSQLDefaultValueMethod implements TemplateMethodModelEx {
+
+        @Override
+        public String exec(List arguments) throws TemplateModelException {
+            if (arguments.isEmpty()) {
+                throw new TemplateModelException("The parameter for the column to get its type from is missing");
+            } else {
+                Object columnPatternCandidate = arguments.get(0);
+                if (columnPatternCandidate instanceof SimpleColumnPattern) {
+                    SimpleColumnPattern<?, ?> columnPattern = (SimpleColumnPattern<?, ?>) columnPatternCandidate;
+                    if (columnPattern.hasDefaultValue()) {
+                        return columnPattern.getSQLDefaultValue();
+                    } else {
+                        throw new TemplateModelException(
+                                "Can not retrieve default value of column "
+                                        + columnPattern.getRealColumnName()
+                                        + " since it does not specify a default value");
+                    }
+                } else {
+                    throw new TemplateModelException(
+                            "The given argument is not of type " + SimpleColumnPattern.class.getSimpleName());
+                }
+            }
+        }
     }
 }
