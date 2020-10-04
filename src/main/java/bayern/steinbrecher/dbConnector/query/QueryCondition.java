@@ -14,10 +14,33 @@ import java.util.Optional;
 public abstract class QueryCondition<T> {
     public static final QueryCondition<String> LIKE
             = new BinaryQueryCondition<>(ArgumentConverter.STRING_ARGUMENT_CONVERTER, "LIKE");
+
     public static final QueryCondition<Boolean> IS_TRUE
             = new UnaryPrefixQueryCondition<>(ArgumentConverter.BOOLEAN_ARGUMENT_CONVERTER, "");
     public static final QueryCondition<Boolean> IS_FALSE
             = new UnaryPrefixQueryCondition<>(ArgumentConverter.BOOLEAN_ARGUMENT_CONVERTER, "NOT");
+
+    public static final QueryCondition<Integer> IS_SMALLER_I
+            = new BinaryQueryCondition<>(ArgumentConverter.INTEGER_ARGUMENT_CONVERTER, "<");
+    public static final QueryCondition<Integer> IS_SMALLER_EQUAL_I
+            = new BinaryQueryCondition<>(ArgumentConverter.INTEGER_ARGUMENT_CONVERTER, "<=");
+    public static final QueryCondition<Integer> IS_EQUAL_I
+            = new BinaryQueryCondition<>(ArgumentConverter.INTEGER_ARGUMENT_CONVERTER, "=");
+    public static final QueryCondition<Integer> IS_GREATER_EQUAL_I
+            = new BinaryQueryCondition<>(ArgumentConverter.INTEGER_ARGUMENT_CONVERTER, ">=");
+    public static final QueryCondition<Integer> IS_GREATER_I
+            = new BinaryQueryCondition<>(ArgumentConverter.INTEGER_ARGUMENT_CONVERTER, ">");
+
+    public static final QueryCondition<Double> IS_SMALLER_D
+            = new BinaryQueryCondition<>(ArgumentConverter.DOUBLE_ARGUMENT_CONVERTER, "<");
+    public static final QueryCondition<Double> IS_SMALLER_EQUAL_D
+            = new BinaryQueryCondition<>(ArgumentConverter.DOUBLE_ARGUMENT_CONVERTER, "<=");
+    public static final QueryCondition<Double> IS_EQUAL_D
+            = new BinaryQueryCondition<>(ArgumentConverter.DOUBLE_ARGUMENT_CONVERTER, "=");
+    public static final QueryCondition<Double> IS_GREATER_EQUAL_D
+            = new BinaryQueryCondition<>(ArgumentConverter.DOUBLE_ARGUMENT_CONVERTER, ">=");
+    public static final QueryCondition<Double> IS_GREATER_D
+            = new BinaryQueryCondition<>(ArgumentConverter.DOUBLE_ARGUMENT_CONVERTER, ">");
 
     private final ArgumentConverter<T> argumentConverter;
 
@@ -37,6 +60,10 @@ public abstract class QueryCondition<T> {
                 String.class, Column.getTypeDummy(String.class), ColumnParser.STRING_COLUMN_PARSER);
         public static final ArgumentConverter<Boolean> BOOLEAN_ARGUMENT_CONVERTER = new ArgumentConverter<>(
                 Boolean.class, Column.getTypeDummy(Boolean.class), ColumnParser.BOOLEAN_COLUMN_PARSER);
+        public static final ArgumentConverter<Integer> INTEGER_ARGUMENT_CONVERTER = new ArgumentConverter<>(
+                Integer.class, Column.getTypeDummy(Integer.class), ColumnParser.INTEGER_COLUMN_PARSER);
+        public static final ArgumentConverter<Double> DOUBLE_ARGUMENT_CONVERTER = new ArgumentConverter<>(
+                Double.class, Column.getTypeDummy(Double.class), ColumnParser.DOUBLE_COLUMN_PARSER);
 
         public final Class<T> runtimeGenericTypeProvider;
         public final Class<Column<T>> runtimeGenericColumnTypeProvider;
