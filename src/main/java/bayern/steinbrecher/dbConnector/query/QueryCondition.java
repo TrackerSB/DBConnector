@@ -13,6 +13,8 @@ import java.util.Optional;
  */
 public abstract class QueryCondition<T> {
     public static final QueryCondition<String> LIKE = new BinaryStringQueryCondition("LIKE");
+    public static final QueryCondition<Boolean> IS_TRUE = new UnaryPrefixBooleanQueryCondition("");
+    public static final QueryCondition<Boolean> IS_FALSE = new UnaryPrefixBooleanQueryCondition("NOT");
 
     private final Class<T> runtimeGenericTypeProvider;
     private final Class<Column<T>> runtimeGenericColumnTypeProvider;
@@ -88,6 +90,34 @@ public abstract class QueryCondition<T> {
 
         protected BinaryStringQueryCondition(@NotNull String operator) {
             super(String.class, Column.getTypeDummy(String.class), ColumnParser.STRING_COLUMN_PARSER, operator);
+        }
+    }
+
+    private static abstract class UnaryPrefixQueryCondition<T> extends QueryCondition<T> {
+        private final String operator;
+
+        protected UnaryPrefixQueryCondition(@NotNull Class<T> runtimeGenericTypeProvider,
+                                            @NotNull Class<Column<T>> runtimeGenericColumnTypeProvider,
+                                            @NotNull ColumnParser<T> columnParser, @NotNull String operator) {
+            super(runtimeGenericTypeProvider, runtimeGenericColumnTypeProvider, columnParser);
+            this.operator = Objects.requireNonNull(operator);
+        }
+
+        @Override
+        public @NotNull String generateSQLExpression(
+                @NotNull QueryGenerator queryGenerator, @NotNull Object... arguments) {
+            if (arguments.length != 1) {
+                throw new IllegalArgumentException("Exactly one argument required");
+            }
+            String argument = convertArgument(queryGenerator, arguments[0]);
+            // FIXME Ensure escaping
+            return String.format("%s %s", operator, argument);
+        }
+    }
+
+    private static class UnaryPrefixBooleanQueryCondition extends UnaryPrefixQueryCondition<Boolean> {
+        protected UnaryPrefixBooleanQueryCondition(@NotNull String operator) {
+            super(Boolean.class, Column.getTypeDummy(Boolean.class), ColumnParser.BOOLEAN_COLUMN_PARSER, operator);
         }
     }
 }
