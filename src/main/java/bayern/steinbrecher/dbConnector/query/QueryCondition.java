@@ -1,6 +1,5 @@
 package bayern.steinbrecher.dbConnector.query;
 
-import bayern.steinbrecher.dbConnector.DBConnection;
 import bayern.steinbrecher.dbConnector.DBConnection.Column;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,12 +10,7 @@ import java.util.Objects;
  * @since 0.5
  */
 public abstract class QueryCondition<T> {
-    public static final QueryCondition<String> LIKE = new BinaryQueryCondition<>(String.class, DBConnection.Column.getTypeDummy(String.class), "LIKE") {
-        @Override
-        protected String convertArgumentImpl(String argument) {
-            return String.format("'%s'", argument);
-        }
-    };
+    public static final QueryCondition<String> LIKE = new BinaryStringQueryCondition("LIKE");
 
     @NotNull
     public abstract String generateSQLExpression(@NotNull QueryGenerator queryGenerator, @NotNull Object... arguments);
@@ -27,7 +21,8 @@ public abstract class QueryCondition<T> {
         private final String operator;
 
         protected BinaryQueryCondition(@NotNull Class<T> runtimeGenericTypeProvider,
-                                       @NotNull Class<Column<T>> runtimeGenericColumnTypeProvider, @NotNull String operator) {
+                                       @NotNull Class<Column<T>> runtimeGenericColumnTypeProvider,
+                                       @NotNull String operator) {
             this.runtimeGenericTypeProvider = Objects.requireNonNull(runtimeGenericTypeProvider);
             this.runtimeGenericColumnTypeProvider = Objects.requireNonNull(runtimeGenericColumnTypeProvider);
             this.operator = Objects.requireNonNull(operator);
@@ -57,6 +52,18 @@ public abstract class QueryCondition<T> {
             String rightHandArgument = convertArgument(queryGenerator, arguments[1]);
             // FIXME Ensure escaping
             return String.format("%s %s %s", leftHandArgument, operator, rightHandArgument);
+        }
+    }
+
+    private static class BinaryStringQueryCondition extends BinaryQueryCondition<String> {
+
+        protected BinaryStringQueryCondition(@NotNull String operator) {
+            super(String.class, Column.getTypeDummy(String.class), operator);
+        }
+
+        @Override
+        protected String convertArgumentImpl(String argument) {
+            return String.format("'%s'", argument);
         }
     }
 }
