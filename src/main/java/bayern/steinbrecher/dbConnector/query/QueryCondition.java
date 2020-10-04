@@ -27,7 +27,7 @@ public abstract class QueryCondition<T> {
     }
 
     @NotNull
-    protected Optional<String> convertAsColumnArgument(QueryGenerator queryGenerator, @NotNull Object argument) {
+    private Optional<String> convertAsColumnArgument(QueryGenerator queryGenerator, @NotNull Object argument) {
         String convertedArgument;
         if (runtimeGenericColumnTypeProvider.isAssignableFrom(argument.getClass())) {
             convertedArgument = queryGenerator.quoteIdentifier(
@@ -39,7 +39,7 @@ public abstract class QueryCondition<T> {
     }
 
     @NotNull
-    protected Optional<String> convertAsTypeArgument(@NotNull Object argument) {
+    private Optional<String> convertAsTypeArgument(@NotNull Object argument) {
         String convertedArgument;
         if (runtimeGenericTypeProvider.isAssignableFrom(argument.getClass())) {
             convertedArgument = columnParser.toString(runtimeGenericTypeProvider.cast(argument));
