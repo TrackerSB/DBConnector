@@ -15,8 +15,10 @@ import java.util.Set;
 public abstract class QueryOperator<T> {
     public static final QueryOperator<String> LIKE
             = new BinaryQueryOperator<>(ArgumentConverter.STRING_ARGUMENT_CONVERTER, "LIKE");
+    public static final QueryOperator<String> CONTAINS
+            = new BinaryQueryOperator<>(ArgumentConverter.STRING_ARGUMENT_CONVERTER, "IN");
     public static final Set<QueryOperator<String>> STRING_OPERATORS = Set.of(
-            LIKE
+            LIKE, CONTAINS
     );
 
     public static final QueryOperator<Boolean> IS_TRUE
