@@ -43,6 +43,10 @@ public class QueryGenerator {
     private final Template queryColumnNamesAndTypesTemplate;
     private final Template searchQueryTemplate;
 
+    /**
+     * @param templateDirectoryPath Specify either an absolute path where the root is the root of this JAR or a
+     *                              relative path where the base directory is the package of {@link SupportedDatabases}.
+     */
     // NOTE Allow creation only within {@link SupportedDatabases}
     QueryGenerator(@NotNull Path templateDirectoryPath, @NotNull BiMap<Class<?>, SQLTypeKeyword> types,
                    char identifierQuoteSymbol) {
@@ -56,8 +60,8 @@ public class QueryGenerator {
         templateConfig.setWrapUncheckedExceptions(true);
         templateConfig.setFallbackOnNullLoopVariable(false);
         try {
-            templateConfig.setDirectoryForTemplateLoading(
-                    Objects.requireNonNull(templateDirectoryPath).toFile());
+            templateConfig.setClassForTemplateLoading(SupportedDatabases.class,
+                    Objects.requireNonNull(templateDirectoryPath).toString());
 
             checkDBExistenceTemplate = templateConfig.getTemplate("checkDBExistence.ftlh");
             createTableColumnTemplate = templateConfig.getTemplate("createTable.ftlh");

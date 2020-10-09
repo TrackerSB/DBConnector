@@ -18,7 +18,7 @@ public enum SupportedDatabases {
      */
     MY_SQL("MySQL", 3306,
             new QueryGenerator(
-                    Paths.get(SupportedDatabases.class.getResource("templates/mysql").toExternalForm()),
+                    Paths.get("templates", "mysql"),
                     HashBiMap.create(Map.of(
                             Boolean.class, new SQLTypeKeyword("TINYINT", 1), //BOOLEAN is an alias for TINYINT(1)
                             Double.class, new SQLTypeKeyword("FLOAT"),
