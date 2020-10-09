@@ -16,6 +16,9 @@ dependencies {
     implementation "com.google.guava:guava:29.0-jre"
     implementation "org.freemarker:freemarker:2.3.30"
     implementation "org.jetbrains:annotations:19.0.0"
+
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.7.0"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.7.0"
 }
 
 compileJava.options.encoding = 'UTF-8'
@@ -28,6 +31,10 @@ java {
     modularity.inferModulePath = true
     withSourcesJar()
     withJavadocJar()
+}
+
+test {
+    useJUnitPlatform()
 }
 
 javadoc {
