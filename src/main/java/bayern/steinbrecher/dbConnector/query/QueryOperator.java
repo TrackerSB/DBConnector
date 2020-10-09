@@ -4,6 +4,7 @@ import bayern.steinbrecher.dbConnector.DBConnection.Column;
 import bayern.steinbrecher.dbConnector.scheme.ColumnParser;
 import org.jetbrains.annotations.NotNull;
 
+import java.time.LocalDate;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -58,6 +59,16 @@ public abstract class QueryOperator<T> {
             IS_SMALLER_D, IS_SMALLER_EQUAL_D, IS_EQUAL_D, IS_GREATER_EQUAL_D, IS_GREATER_D
     );
 
+    public static final QueryOperator<LocalDate> IS_BEFORE_DATE
+            = new BinaryQueryOperator<>(ArgumentConverter.LOCALDATE_ARGUMENT_CONVERTER, "<");
+    public static final QueryOperator<LocalDate> IS_AT_DATE
+            = new BinaryQueryOperator<>(ArgumentConverter.LOCALDATE_ARGUMENT_CONVERTER, "=");
+    public static final QueryOperator<LocalDate> IS_AFTER_DATE
+            = new BinaryQueryOperator<>(ArgumentConverter.LOCALDATE_ARGUMENT_CONVERTER, ">");
+    public static final Set<QueryOperator<LocalDate>> LOCALDATE_OPERATORS = Set.of(
+            IS_BEFORE_DATE, IS_AT_DATE, IS_AFTER_DATE
+    );
+
     private final ArgumentConverter<T> argumentConverter;
     private final String operatorSymbol;
 
@@ -107,6 +118,8 @@ public abstract class QueryOperator<T> {
                 Integer.class, Column.getTypeDummy(Integer.class), ColumnParser.INTEGER_COLUMN_PARSER);
         public static final ArgumentConverter<Double> DOUBLE_ARGUMENT_CONVERTER = new ArgumentConverter<>(
                 Double.class, Column.getTypeDummy(Double.class), ColumnParser.DOUBLE_COLUMN_PARSER);
+        public static final ArgumentConverter<LocalDate> LOCALDATE_ARGUMENT_CONVERTER = new ArgumentConverter<>(
+                LocalDate.class, Column.getTypeDummy(LocalDate.class), ColumnParser.LOCALDATE_COLUMN_PARSER);
 
         public final Class<T> runtimeGenericTypeProvider;
         public final Class<Column<T>> runtimeGenericColumnTypeProvider;
