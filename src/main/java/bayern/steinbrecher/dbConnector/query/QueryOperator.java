@@ -16,6 +16,9 @@ import java.util.Set;
 public abstract class QueryOperator<T> {
     public static final QueryOperator<String> LIKE
             = new BinaryQueryOperator<>(ArgumentConverter.STRING_ARGUMENT_CONVERTER, "LIKE");
+    /**
+     * @since 0.8
+     */
     public static final QueryOperator<String> CONTAINS
             = new BinaryQueryOperator<>(ArgumentConverter.STRING_ARGUMENT_CONVERTER, "IN");
     public static final Set<QueryOperator<String>> STRING_OPERATORS = Set.of(
@@ -59,12 +62,24 @@ public abstract class QueryOperator<T> {
             IS_SMALLER_D, IS_SMALLER_EQUAL_D, IS_EQUAL_D, IS_GREATER_EQUAL_D, IS_GREATER_D
     );
 
+    /**
+     * @since 0.8
+     */
     public static final QueryOperator<LocalDate> IS_BEFORE_DATE
             = new BinaryQueryOperator<>(ArgumentConverter.LOCALDATE_ARGUMENT_CONVERTER, "<");
+    /**
+     * @since 0.8
+     */
     public static final QueryOperator<LocalDate> IS_AT_DATE
             = new BinaryQueryOperator<>(ArgumentConverter.LOCALDATE_ARGUMENT_CONVERTER, "=");
+    /**
+     * @since 0.8
+     */
     public static final QueryOperator<LocalDate> IS_AFTER_DATE
             = new BinaryQueryOperator<>(ArgumentConverter.LOCALDATE_ARGUMENT_CONVERTER, ">");
+    /**
+     * @since 0.8
+     */
     public static final Set<QueryOperator<LocalDate>> LOCALDATE_OPERATORS = Set.of(
             IS_BEFORE_DATE, IS_AT_DATE, IS_AFTER_DATE
     );
