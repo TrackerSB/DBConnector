@@ -3,7 +3,6 @@ package bayern.steinbrecher.dbConnector.query;
 import com.google.common.collect.HashBiMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.Map;
