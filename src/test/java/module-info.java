@@ -1,4 +1,4 @@
-module bayern.steinbrecher.DBConnector.Test {
+module bayern.steinbrecher.test.DBConnector {
     requires bayern.steinbrecher.DBConnector;
     requires org.junit.jupiter.api;
 

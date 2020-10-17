@@ -9,12 +9,11 @@ import org.junit.jupiter.api.Test;
  * @since 0.9
  */
 public class SupportedDatabasesTest {
+
     @Test
-    @DisplayName("Check creation of DBMS instances")
+    @DisplayName("Check creation of DBMS instances and validity of query templates")
     public void testCreationOfInstances() {
-        // FIXME Resources not found since getResource(...) is called in classes directory instead of packed jar
-        // for (SupportedDatabases dbms : SupportedDatabases.values()) {
-        //     System.out.println(dbms);
-        // }
+        SupportedDatabases[] dbmsInstances = SupportedDatabases.values();
+        System.out.printf("Created %d instances for DBMSs%n", dbmsInstances.length);
     }
 }
