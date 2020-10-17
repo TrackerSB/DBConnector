@@ -18,11 +18,13 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -33,6 +35,20 @@ import java.util.stream.Collectors;
  */
 public class QueryGenerator {
     private static final Logger LOGGER = Logger.getLogger(QueryGenerator.class.getName());
+    // NOTE Allow creation only within {@link SupportedDatabases}
+    private static final Class<SupportedDatabases> TEMPLATE_PROVIDING_CLASS = SupportedDatabases.class;
+    @SuppressWarnings("Convert2Lambda")
+    private static final Path TEMPLATE_DIR_BASE_PATH = new Callable<>() {
+        @Override
+        public Path call() {
+            String[] packageNameParts = TEMPLATE_PROVIDING_CLASS.getPackageName()
+                    .split("\\.");
+            return Arrays.stream(packageNameParts)
+                    .reduce(Paths.get(""),
+                            Path::resolve,
+                            Path::resolve);
+        }
+    }.call();
 
     private final BiMap<Class<?>, SQLTypeKeyword> types;
     private final char identifierQuoteSymbol;
@@ -47,7 +63,6 @@ public class QueryGenerator {
      * @param templateDirectoryPath Specify either an absolute path where the root is the root of this JAR or a
      *                              relative path where the base directory is the package of {@link SupportedDatabases}.
      */
-    // NOTE Allow creation only within {@link SupportedDatabases}
     QueryGenerator(@NotNull Path templateDirectoryPath, @NotNull BiMap<Class<?>, SQLTypeKeyword> types,
                    char identifierQuoteSymbol) {
         this.types = Objects.requireNonNull(types);
@@ -60,8 +75,8 @@ public class QueryGenerator {
         templateConfig.setWrapUncheckedExceptions(true);
         templateConfig.setFallbackOnNullLoopVariable(false);
         try {
-            templateConfig.setClassForTemplateLoading(SupportedDatabases.class,
-                    Objects.requireNonNull(templateDirectoryPath).toString());
+            templateConfig.setClassLoaderForTemplateLoading(SupportedDatabases.class.getClassLoader(),
+                    TEMPLATE_DIR_BASE_PATH.resolve(Objects.requireNonNull(templateDirectoryPath)).toString());
 
             checkDBExistenceTemplate = templateConfig.getTemplate("checkDBExistence.ftlh");
             createTableColumnTemplate = templateConfig.getTemplate("createTable.ftlh");
