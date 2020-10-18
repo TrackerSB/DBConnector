@@ -2,6 +2,8 @@ package bayern.steinbrecher.test.dbConnector.query;
 
 import bayern.steinbrecher.dbConnector.AuthException;
 import bayern.steinbrecher.dbConnector.DBConnection;
+import bayern.steinbrecher.dbConnector.DBConnection.Column;
+import bayern.steinbrecher.dbConnector.DBConnection.Table;
 import bayern.steinbrecher.dbConnector.DatabaseNotFoundException;
 import bayern.steinbrecher.dbConnector.SimpleConnection;
 import bayern.steinbrecher.dbConnector.credentials.SimpleCredentials;
@@ -137,8 +139,40 @@ public class SupportedDatabasesTest {
                         .anyMatch(t -> t.getTableName().equals(TEST_TABLE_SCHEME.getTableName())),
                 "The test table was not created"
         );
-        assertEquals(REQUIRED_COLUMNS.size(), connection.getAllColumns(TEST_TABLE_SCHEME).size());
-        // FIXME Check names and types of actually existing columns
+
+    }
+
+    /**
+     * @since 0.10
+     */
+    @ParameterizedTest(name = "Check whether required columns of tables are created correctly")
+    @MethodSource("provideConnections")
+    void checkNamesAndTypesOfRequiredColumns(@NotNull DBConnection connection){
+        Map<String, Class<?>> actualColumnInformation
+                = assertDoesNotThrow(() -> connection.getAllColumns(TEST_TABLE_SCHEME),
+                String.format("Could not request columns of '%s'", TEST_TABLE_SCHEME.getTableName()))
+                .stream()
+                .collect(Collectors.toMap(Column::getName, Column::getColumnType));
+        boolean tableCorrectlyCreated = true;
+        for (SimpleColumnPattern<?, ?> pattern : REQUIRED_COLUMNS) {
+            String requiredColumnName = pattern.getRealColumnName();
+            if (actualColumnInformation.containsKey(requiredColumnName)) {
+                Class<?> expectedColumnType = pattern.getParser()
+                        .getType();
+                Class<?> actualColumnType = actualColumnInformation.get(requiredColumnName);
+                if (expectedColumnType != actualColumnType) {
+                    LOGGER.log(Level.INFO, String.format(
+                            "The column '%s' has type '%s' but '%s' is expected", requiredColumnName,
+                            actualColumnType.getSimpleName(), expectedColumnType.getSimpleName()));
+                    tableCorrectlyCreated = false;
+                }
+            } else {
+                LOGGER.log(Level.INFO,
+                        String.format("The required column '%s' was not created", requiredColumnName));
+                tableCorrectlyCreated = false;
+            }
+        }
+        assertTrue(tableCorrectlyCreated, "The table was not correctly created (see logger output)");
     }
 
     private static class TestTableEntry {
