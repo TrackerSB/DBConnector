@@ -65,7 +65,7 @@ public final class SimpleConnection extends DBConnection {
     @Override
     public List<List<String>> execQuery(@NotNull String sqlCode) throws SQLException {
         try (PreparedStatement preparedStatement = connection.prepareStatement(sqlCode);
-             ResultSet resultset = preparedStatement.executeQuery()) {
+                ResultSet resultset = preparedStatement.executeQuery()) {
             List<List<String>> resultTable = new ArrayList<>();
             List<String> labels = new ArrayList<>();
             for (int i = 1; i <= resultset.getMetaData().getColumnCount(); i++) {
