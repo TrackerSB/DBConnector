@@ -3,7 +3,6 @@ package bayern.steinbrecher.test.dbConnector.query;
 import bayern.steinbrecher.dbConnector.AuthException;
 import bayern.steinbrecher.dbConnector.DBConnection;
 import bayern.steinbrecher.dbConnector.DatabaseNotFoundException;
-import bayern.steinbrecher.dbConnector.SchemeCreationException;
 import bayern.steinbrecher.dbConnector.SimpleConnection;
 import bayern.steinbrecher.dbConnector.credentials.SimpleCredentials;
 import bayern.steinbrecher.dbConnector.query.SupportedDatabases;
@@ -27,10 +26,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static bayern.steinbrecher.test.dbConnector.utility.AssumptionUtility.assumeDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -40,6 +43,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  */
 // FIXME Implement dependencies between test methods
 public class SupportedDatabasesTest {
+    private static final Logger LOGGER = Logger.getLogger(SupportedDatabasesTest.class.getName());
     private static final String DB_NAME = "TestDB";
     private static final String DB_USERNAME = "user";
     private static final String DB_PASSWORD = "password";
@@ -111,25 +115,25 @@ public class SupportedDatabasesTest {
     @ParameterizedTest(name = "Check requesting all existing tables")
     @MethodSource("provideConnections")
     void requestAllExistingTables(@NotNull DBConnection connection) {
-        assertTrue(connection.getAllTables().isEmpty(), "The database contains expected tables");
+        assertDoesNotThrow(connection::getAllTables, "Could not request tables of database");
     }
 
     /**
      * @since 0.10
      */
-    @ParameterizedTest(name = "Check requesting all existing tables")
+    @ParameterizedTest(name = "Check creation of tables")
     @MethodSource("provideConnections")
-    void createTable(@NotNull DBConnection connection) throws SchemeCreationException {
+    void createTable(@NotNull DBConnection connection) {
+        Set<Table<?, ?>> tables = assumeDoesNotThrow(connection::getAllTables, "Could not request existing tables");
         assumeTrue(
-                connection.getAllTables()
-                        .stream()
+                tables.stream()
                         .noneMatch(t -> t.getTableName().equals(TEST_TABLE_SCHEME.getTableName())),
                 "The database already contains a table which has the name of the test table to be created"
         );
-        connection.createTableIfNotExists(TEST_TABLE_SCHEME);
+        assertDoesNotThrow(() -> connection.createTableIfNotExists(TEST_TABLE_SCHEME), "Could not create table");
+        tables = assumeDoesNotThrow(connection::getAllTables, "Could not request existing tables");
         assertTrue(
-                connection.getAllTables()
-                        .stream()
+                tables.stream()
                         .anyMatch(t -> t.getTableName().equals(TEST_TABLE_SCHEME.getTableName())),
                 "The test table was not created"
         );
@@ -176,7 +180,7 @@ public class SupportedDatabasesTest {
             return this;
         }
 
-        public TestTableEntry setAssociatedValue(Integer key, String value){
+        public TestTableEntry setAssociatedValue(Integer key, String value) {
             associatedValues.put(key, value);
             return this;
         }

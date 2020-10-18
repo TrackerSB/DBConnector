@@ -1,6 +1,7 @@
 package bayern.steinbrecher.dbConnector;
 
 import bayern.steinbrecher.dbConnector.credentials.SshCredentials;
+import bayern.steinbrecher.dbConnector.query.QueryFailedException;
 import bayern.steinbrecher.dbConnector.query.SupportedDatabases;
 import bayern.steinbrecher.jsch.ChannelExec;
 import bayern.steinbrecher.jsch.JSch;
@@ -18,7 +19,6 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -111,7 +111,7 @@ public final class SshConnection extends DBConnection {
 
             //Check sql-host connection
             execQuery("SELECT 1");
-        } catch (SQLException | JSchException ex) {
+        } catch (QueryFailedException | JSchException ex) {
             close();
             /*
              * A simple instanceof check is not sufficient => It can not be replaced by an additional catch clause.
@@ -216,13 +216,13 @@ public final class SshConnection extends DBConnection {
      */
     @Override
     @NotNull
-    public List<List<String>> execQuery(@NotNull String sqlCode) throws SQLException {
+    public List<List<String>> execQuery(@NotNull String sqlCode) throws QueryFailedException {
         LOGGER.log(Level.FINE, "Execute query: \"{0}\"", sqlCode);
         String result;
         try {
             result = execCommand(generateQueryCommand(Objects.requireNonNull(sqlCode)));
         } catch (JSchException | CommandException | IOException ex) {
-            throw new SQLException(ex);
+            throw new QueryFailedException(ex);
         }
         LOGGER.log(Level.FINE, "Query result:\n{0}", result);
         String[] rows = result.split("\n");
@@ -240,11 +240,11 @@ public final class SshConnection extends DBConnection {
      * @since 0.1
      */
     @Override
-    public void execUpdate(@NotNull String sqlCode) throws SQLException {
+    public void execUpdate(@NotNull String sqlCode) throws QueryFailedException {
         try {
             execCommand(generateQueryCommand(Objects.requireNonNull(sqlCode)));
         } catch (JSchException | CommandException | IOException ex) {
-            throw new SQLException(ex);
+            throw new QueryFailedException(ex);
         }
     }
 

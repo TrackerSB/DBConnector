@@ -1,6 +1,7 @@
 package bayern.steinbrecher.dbConnector;
 
 import bayern.steinbrecher.dbConnector.query.GenerationFailedException;
+import bayern.steinbrecher.dbConnector.query.QueryFailedException;
 import bayern.steinbrecher.dbConnector.query.QueryGenerator;
 import bayern.steinbrecher.dbConnector.query.SupportedDatabases;
 import bayern.steinbrecher.dbConnector.scheme.ColumnPattern;
@@ -9,7 +10,6 @@ import bayern.steinbrecher.dbConnector.scheme.TableScheme;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -53,20 +53,20 @@ public abstract class DBConnection implements AutoCloseable {
      *
      * @param sqlCode The sql code to execute.
      * @return Table containing the results AND the headings of each column. First dimension rows; second columns.
-     * @throws SQLException Thrown if the sql code is invalid.
+     * @throws QueryFailedException Thrown if the sql code is invalid.
      * @since 0.1
      */
     @NotNull
-    public abstract List<List<String>> execQuery(@NotNull String sqlCode) throws SQLException;
+    public abstract List<List<String>> execQuery(@NotNull String sqlCode) throws QueryFailedException;
 
     /**
      * Executes a command like INSERT INTO, UPDATE or CREATE.
      *
      * @param sqlCode The sql code to execute.
-     * @throws SQLException Thrown if the sql code is invalid.
+     * @throws QueryFailedException Thrown if the sql code is invalid.
      * @since 0.1
      */
-    public abstract void execUpdate(@NotNull String sqlCode) throws SQLException;
+    public abstract void execUpdate(@NotNull String sqlCode) throws QueryFailedException;
 
     /**
      * Checks if the connected database exists.
@@ -74,7 +74,7 @@ public abstract class DBConnection implements AutoCloseable {
      * @return {@code true} only if the connected database exists.
      * @since 0.1
      */
-    public boolean databaseExists() {
+    public boolean databaseExists() throws QueryFailedException {
         try {
             QueryGenerator queryGenerator = getDbms()
                     .getQueryGenerator();
@@ -83,24 +83,21 @@ public abstract class DBConnection implements AutoCloseable {
             return !result.isEmpty()
                     && !result.get(0).isEmpty()
                     && Integer.parseInt(result.get(0).get(0)) > 0;
-        } catch (SQLException | GenerationFailedException ex) {
-            // FIXME Rethrow a new exception instead?
-            LOGGER.log(
-                    Level.SEVERE, String.format("Could not check existence of database '%s'", getDatabaseName()), ex);
-            return false;
+        } catch (GenerationFailedException ex) {
+            throw new QueryFailedException(String.format("Could not check existence of database '%s'", getDatabaseName()), ex);
         }
     }
 
     /**
      * @since 0.1
      */
-    public void createTableIfNotExists(@NotNull TableScheme<?, ?> scheme) throws SchemeCreationException {
+    public void createTableIfNotExists(@NotNull TableScheme<?, ?> scheme) throws QueryFailedException {
         if (!tableExists(scheme)) {
             //FIXME Check rights for creating tables
             try {
                 execUpdate(getDbms().getQueryGenerator().generateCreateTableStatement(getDatabaseName(), scheme));
-            } catch (SQLException | GenerationFailedException ex) {
-                throw new SchemeCreationException("Could not create table " + scheme.getTableName(), ex);
+            } catch (GenerationFailedException ex) {
+                throw new QueryFailedException(String.format("Could not create table '%s'", scheme.getTableName()), ex);
             }
         }
     }
@@ -113,7 +110,8 @@ public abstract class DBConnection implements AutoCloseable {
      * @return The table to request all data from.
      * @since 0.1
      */
-    public <T> T getTableContent(@NotNull TableScheme<T, ?> tableScheme) throws GenerationFailedException {
+    public <T> T getTableContent(@NotNull TableScheme<T, ?> tableScheme)
+            throws GenerationFailedException, QueryFailedException {
         Set<SimpleColumnPattern<?, ?>> missingColumns = getMissingColumns(tableScheme);
         if (missingColumns.isEmpty()) {
             T tableContent;
@@ -123,7 +121,7 @@ public abstract class DBConnection implements AutoCloseable {
                             Collections.emptyList(), Collections.emptyList());
             try {
                 tableContent = tableScheme.parseFrom(execQuery(searchQuery));
-            } catch (SQLException ex) {
+            } catch (QueryFailedException ex) {
                 throw new GenerationFailedException(
                         String.format("Could not parse query results to a representation for '%s'",
                                 tableScheme.getTableName()),
@@ -139,7 +137,8 @@ public abstract class DBConnection implements AutoCloseable {
      * @since 0.5
      */
     @NotNull
-    public Set<SimpleColumnPattern<?, ?>> getMissingColumns(@NotNull TableScheme<?, ?> scheme) {
+    public Set<SimpleColumnPattern<?, ?>> getMissingColumns(@NotNull TableScheme<?, ?> scheme)
+            throws QueryFailedException {
         Set<Column<?>> cachedColumns = getAllColumns(scheme);
         return scheme.getRequiredColumns()
                 .stream()
@@ -151,17 +150,24 @@ public abstract class DBConnection implements AutoCloseable {
      * @since 0.5
      */
     @NotNull
-    public Set<Column<?>> getAllColumns(@NotNull TableScheme<?, ?> tableScheme) {
-        return getTable(tableScheme)
-                .map(Table::getColumns)
-                .orElseThrow();
+    public Set<Column<?>> getAllColumns(@NotNull TableScheme<?, ?> tableScheme) throws QueryFailedException {
+        Optional<Table<?, ?>> table = getTable(tableScheme);
+        if(table.isPresent()){
+            return table.get()
+                    .getColumns();
+        } else {
+            throw new QueryFailedException(
+                    String.format(
+                            "Could not return existing columns since there is no table corresponding to the given "
+                            + "scheme for '%s'", tableScheme.getTableName()));
+        }
     }
 
     /**
      * @since 0.5
      */
     @NotNull
-    public Set<Table<?, ?>> getAllTables() {
+    public Set<Table<?, ?>> getAllTables() throws QueryFailedException {
         if (tablesCache.isEmpty()) {
             QueryGenerator queryGenerator = getDbms()
                     .getQueryGenerator();
@@ -171,9 +177,8 @@ public abstract class DBConnection implements AutoCloseable {
                 for (List<String> row : result) {
                     tablesCache.add(new Table<>(row.get(0)));
                 }
-            } catch (GenerationFailedException | SQLException ex) {
-                // FIXME Rethrow a new exception instead?
-                LOGGER.log(Level.SEVERE, "Could not request existing tables", ex);
+            } catch (GenerationFailedException ex) {
+                throw new QueryFailedException("Could not request existing tables", ex);
             }
         }
         return tablesCache;
@@ -186,7 +191,7 @@ public abstract class DBConnection implements AutoCloseable {
      * @since 0.6
      */
     @NotNull
-    public Optional<Table<?, ?>> getTable(@NotNull TableScheme<?, ?> scheme) {
+    public Optional<Table<?, ?>> getTable(@NotNull TableScheme<?, ?> scheme) throws QueryFailedException {
         return getAllTables()
                 .stream()
                 .filter(table -> table.getTableName()
@@ -197,7 +202,7 @@ public abstract class DBConnection implements AutoCloseable {
     /**
      * @since 0.1
      */
-    public boolean tableExists(@NotNull TableScheme<?, ?> tableScheme) {
+    public boolean tableExists(@NotNull TableScheme<?, ?> tableScheme) throws QueryFailedException {
         return getTable(tableScheme)
                 .isPresent();
     }
@@ -244,7 +249,7 @@ public abstract class DBConnection implements AutoCloseable {
 
         @NotNull
         @Unmodifiable
-        public Set<Column<?>> getColumns() {
+        public Set<Column<?>> getColumns() throws QueryFailedException {
             if (cachedColumns.isEmpty()) {
                 try {
                     QueryGenerator queryGenerator = getDbms()
@@ -264,9 +269,9 @@ public abstract class DBConnection implements AutoCloseable {
                                     columnName, getTableName(), columnTypeName));
                         }
                     }
-                } catch (GenerationFailedException | SQLException ex) {
-                    // FIXME Rethrow a new exception instead?
-                    LOGGER.log(Level.SEVERE, "Could not request existing columns of table " + getTableName(), ex);
+                } catch (GenerationFailedException ex) {
+                    throw new QueryFailedException(
+                            String.format("Could not request existing columns of table '%s'", getTableName()), ex);
                 }
             }
             return Collections.unmodifiableSet(cachedColumns);

@@ -1,6 +1,7 @@
 package bayern.steinbrecher.dbConnector;
 
 import bayern.steinbrecher.dbConnector.credentials.SimpleCredentials;
+import bayern.steinbrecher.dbConnector.query.QueryFailedException;
 import bayern.steinbrecher.dbConnector.query.SupportedDatabases;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,7 +77,7 @@ public final class SimpleConnection extends DBConnection {
      */
     @NotNull
     @Override
-    public List<List<String>> execQuery(@NotNull String sqlCode) throws SQLException {
+    public List<List<String>> execQuery(@NotNull String sqlCode) throws QueryFailedException {
         try (PreparedStatement preparedStatement = connection.prepareStatement(sqlCode);
                 ResultSet resultset = preparedStatement.executeQuery()) {
             List<List<String>> resultTable = new ArrayList<>();
@@ -95,6 +96,8 @@ public final class SimpleConnection extends DBConnection {
             }
 
             return resultTable;
+        } catch (SQLException ex) {
+            throw new QueryFailedException(ex);
         }
     }
 
@@ -102,9 +105,11 @@ public final class SimpleConnection extends DBConnection {
      * @since 0.1
      */
     @Override
-    public void execUpdate(@NotNull String sqlCode) throws SQLException {
+    public void execUpdate(@NotNull String sqlCode) throws QueryFailedException {
         try (PreparedStatement preparedStatement = connection.prepareStatement(sqlCode)) {
             preparedStatement.executeUpdate();
+        } catch (SQLException ex) {
+            throw new QueryFailedException(ex);
         }
     }
 
