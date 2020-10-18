@@ -29,10 +29,10 @@ public final class SimpleConnection extends DBConnection {
     private Connection connection;
 
     /**
-     * @since 0.1
+     * @since 0.10
      */
     public SimpleConnection(@NotNull SupportedDatabases dbms, @NotNull String databaseHost, int databasePort,
-                            @NotNull String databaseName, @NotNull SimpleCredentials credentials)
+                            @NotNull String databaseName, @NotNull SimpleCredentials credentials, boolean useSSL)
             throws AuthException, DatabaseNotFoundException {
         super(databaseName, dbms);
         String databaseHostPrefix = Objects.requireNonNull(databaseHost);
@@ -42,11 +42,15 @@ public final class SimpleConnection extends DBConnection {
         String databaseAddress = databaseHostPrefix + ":" + databasePort + "/";
         try {
             connection = DriverManager.getConnection(DRIVER_PROTOCOLS.get(dbms) + databaseAddress
-                            + databaseName + "?verifyServerCertificate=false&useSSL=true&zeroDateTimeBehavior=CONVERT_TO_NULL"
+                            + databaseName + "?"
+                            + "verifyServerCertificate=false"
+                            + (useSSL ? "&useSSL=true" : "")
+                            + "&zeroDateTimeBehavior=CONVERT_TO_NULL"
                             + "&serverTimezone=UTC",
                     credentials.getUsername(), credentials.getPassword());
-//        } catch (CommunicationsException ex) { // FIXME Reintroduce exception case
-//            throw new UnknownHostException(ex.getMessage()); //NOPMD - UnknownHostException does not accept a cause.
+            //        } catch (CommunicationsException ex) { // FIXME Reintroduce exception case
+            //            throw new UnknownHostException(ex.getMessage()); //NOPMD - UnknownHostException does not
+            //            accept a cause.
         } catch (SQLSyntaxErrorException ex) {
             if (ex.getMessage().toLowerCase().contains("unknown database")) {
                 throw new DatabaseNotFoundException("The database " + databaseName + " was not found.", ex);
@@ -56,6 +60,15 @@ public final class SimpleConnection extends DBConnection {
         } catch (SQLException ex) {
             throw new AuthException("The authentication to the database failed.", ex);
         }
+    }
+
+    /**
+     * @since 0.1
+     */
+    public SimpleConnection(@NotNull SupportedDatabases dbms, @NotNull String databaseHost, int databasePort,
+                            @NotNull String databaseName, @NotNull SimpleCredentials credentials)
+            throws AuthException, DatabaseNotFoundException {
+        this(dbms, databaseHost, databasePort, databaseName, credentials, true);
     }
 
     /**
