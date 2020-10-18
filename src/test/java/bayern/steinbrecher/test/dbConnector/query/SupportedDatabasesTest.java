@@ -147,9 +147,19 @@ public class SupportedDatabasesTest {
      */
     @ParameterizedTest(name = "Check whether required columns of tables are created correctly")
     @MethodSource("provideConnections")
-    void checkNamesAndTypesOfRequiredColumns(@NotNull DBConnection connection){
+    void requestExistingColumns(@NotNull DBConnection connection) {
+        assertDoesNotThrow(() -> connection.getAllColumns(TEST_TABLE_SCHEME),
+                String.format("Could not request columns of '%s'", TEST_TABLE_SCHEME.getTableName()));
+    }
+
+    /**
+     * @since 0.10
+     */
+    @ParameterizedTest(name = "Check whether required columns of tables are created correctly")
+    @MethodSource("provideConnections")
+    void checkNamesAndTypesOfRequiredColumns(@NotNull DBConnection connection) {
         Map<String, Class<?>> actualColumnInformation
-                = assertDoesNotThrow(() -> connection.getAllColumns(TEST_TABLE_SCHEME),
+                = assumeDoesNotThrow(() -> connection.getAllColumns(TEST_TABLE_SCHEME),
                 String.format("Could not request columns of '%s'", TEST_TABLE_SCHEME.getTableName()))
                 .stream()
                 .collect(Collectors.toMap(Column::getName, Column::getColumnType));
