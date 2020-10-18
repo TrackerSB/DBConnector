@@ -84,7 +84,8 @@ public abstract class DBConnection implements AutoCloseable {
                     && !result.get(0).isEmpty()
                     && Integer.parseInt(result.get(0).get(0)) > 0;
         } catch (GenerationFailedException ex) {
-            throw new QueryFailedException(String.format("Could not check existence of database '%s'", getDatabaseName()), ex);
+            throw new QueryFailedException(String
+                    .format("Could not check existence of database '%s'", getDatabaseName()), ex);
         }
     }
 
@@ -151,15 +152,20 @@ public abstract class DBConnection implements AutoCloseable {
      */
     @NotNull
     public Set<Column<?>> getAllColumns(@NotNull TableScheme<?, ?> tableScheme) throws QueryFailedException {
-        Optional<Table<?, ?>> table = getTable(tableScheme);
-        if(table.isPresent()){
+        Optional<Table<?, ?>> table;
+        try {
+            table = getTable(tableScheme);
+        } catch (QueryFailedException ex) {
+            throw new QueryFailedException("Could not request existing columns", ex);
+        }
+        if (table.isPresent()) {
             return table.get()
                     .getColumns();
         } else {
             throw new QueryFailedException(
                     String.format(
                             "Could not return existing columns since there is no table corresponding to the given "
-                            + "scheme for '%s'", tableScheme.getTableName()));
+                                    + "scheme for '%s'", tableScheme.getTableName()));
         }
     }
 
@@ -192,11 +198,17 @@ public abstract class DBConnection implements AutoCloseable {
      */
     @NotNull
     public Optional<Table<?, ?>> getTable(@NotNull TableScheme<?, ?> scheme) throws QueryFailedException {
-        return getAllTables()
-                .stream()
-                .filter(table -> table.getTableName()
-                        .equalsIgnoreCase(Objects.requireNonNull(scheme).getTableName()))
-                .findAny();
+        try {
+            return getAllTables()
+                    .stream()
+                    .filter(table -> table.getTableName()
+                            .equalsIgnoreCase(Objects.requireNonNull(scheme).getTableName()))
+                    .findAny();
+        } catch (QueryFailedException ex) {
+            throw new QueryFailedException(
+                    String.format(
+                            "Could not check existence of table for table scheme '%s'", scheme.getTableName()), ex);
+        }
     }
 
     /**
