@@ -111,7 +111,7 @@ public class SupportedDatabasesTest {
     @ParameterizedTest(name = "Check requesting all existing tables")
     @MethodSource("provideConnections")
     void requestAllExistingTables(@NotNull DBConnection connection) {
-        assertTrue(connection.getAllTables().isEmpty());
+        assertTrue(connection.getAllTables().isEmpty(), "The database contains expected tables");
     }
 
     /**
@@ -123,13 +123,15 @@ public class SupportedDatabasesTest {
         assumeTrue(
                 connection.getAllTables()
                         .stream()
-                        .noneMatch(t -> t.getTableName().equals(TEST_TABLE_SCHEME.getTableName()))
+                        .noneMatch(t -> t.getTableName().equals(TEST_TABLE_SCHEME.getTableName())),
+                "The database already contains a table which has the name of the test table to be created"
         );
         connection.createTableIfNotExists(TEST_TABLE_SCHEME);
         assertTrue(
                 connection.getAllTables()
                         .stream()
-                        .anyMatch(t -> t.getTableName().equals(TEST_TABLE_SCHEME.getTableName()))
+                        .anyMatch(t -> t.getTableName().equals(TEST_TABLE_SCHEME.getTableName())),
+                "The test table was not created"
         );
         assertEquals(REQUIRED_COLUMNS.size(), connection.getAllColumns(TEST_TABLE_SCHEME).size());
         // FIXME Check names and types of actually existing columns
