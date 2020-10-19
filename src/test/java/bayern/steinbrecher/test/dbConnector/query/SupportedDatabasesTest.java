@@ -136,7 +136,7 @@ public class SupportedDatabasesTest {
         tables = assumeDoesNotThrow(connection::getAllTables, "Could not request existing tables");
         assertTrue(
                 tables.stream()
-                        .anyMatch(t -> t.getTableName().equals(TEST_TABLE_SCHEME.getTableName())),
+                        .anyMatch(t -> t.getTableName().equalsIgnoreCase(TEST_TABLE_SCHEME.getTableName())),
                 "The test table was not created"
         );
 
