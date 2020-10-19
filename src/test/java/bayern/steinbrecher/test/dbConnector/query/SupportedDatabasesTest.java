@@ -103,6 +103,7 @@ public class SupportedDatabasesTest {
 
     @AfterAll
     static void stopDatabases() throws ManagedProcessException {
+        CONNECTIONS.forEach(DBConnection::close);
         MYSQL_DB.stop();
     }
 
