@@ -263,6 +263,7 @@ public abstract class DBConnection implements AutoCloseable {
                     String query = queryGenerator.generateQueryColumnNamesAndTypesStatement(
                             getDatabaseName(), this);
                     List<List<String>> result = execQuery(query);
+                    result.remove(0); // Skip headings
                     for (List<String> row : result) {
                         String columnName = row.get(0);
                         String columnTypeName = row.get(1);
