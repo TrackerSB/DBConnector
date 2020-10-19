@@ -6,6 +6,7 @@ import bayern.steinbrecher.dbConnector.scheme.SimpleColumnPattern;
 import bayern.steinbrecher.dbConnector.scheme.TableScheme;
 import com.google.common.collect.BiMap;
 import freemarker.core.Environment;
+import freemarker.ext.beans.StringModel;
 import freemarker.template.Configuration;
 import freemarker.template.SimpleScalar;
 import freemarker.template.Template;
@@ -208,17 +209,23 @@ public class QueryGenerator {
                 throw new TemplateModelException("The parameter for the column to get its type from is missing");
             } else {
                 Object columnPatternCandidate = arguments.get(0);
-                if (columnPatternCandidate instanceof ColumnPattern) {
-                    ColumnPattern<?, ?> columnPattern = (ColumnPattern<?, ?>) columnPatternCandidate;
-                    Class<?> columnType = columnPattern.getParser()
-                            .getType();
-                    return getType(columnType)
-                            .orElseThrow(
-                                    () -> new TemplateModelException(
-                                            "No SQL type for " + columnType.getSimpleName() + " available"));
+                if(columnPatternCandidate instanceof StringModel) {
+                    Object wrappedColumnPattern = ((StringModel) columnPatternCandidate).getWrappedObject();
+                    if (wrappedColumnPattern instanceof ColumnPattern) {
+                        ColumnPattern<?, ?> columnPattern = (ColumnPattern<?, ?>) wrappedColumnPattern;
+                        Class<?> columnType = columnPattern.getParser()
+                                .getType();
+                        return getType(columnType)
+                                .orElseThrow(
+                                        () -> new TemplateModelException(
+                                                "No SQL type for " + columnType.getSimpleName() + " available"));
+                    } else {
+                        throw new TemplateModelException("The given model does not wrap an object of type "
+                                + ColumnPattern.class.getSimpleName());
+                    }
                 } else {
                     throw new TemplateModelException(
-                            "The given argument is not of type " + ColumnPattern.class.getSimpleName());
+                            "The given argument is not of type " + StringModel.class.getSimpleName());
                 }
             }
         }
