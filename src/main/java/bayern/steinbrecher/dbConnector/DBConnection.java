@@ -29,10 +29,6 @@ public abstract class DBConnection implements AutoCloseable {
     private static final Logger LOGGER = Logger.getLogger(DBConnection.class.getName());
     private final String databaseName;
     private final SupportedDatabases dbms;
-    /**
-     * NOTE Should be a local static variable in {@link #getAllTables()}.
-     */
-    private final Set<Table<?, ?>> tablesCache = new HashSet<>();
 
     /**
      * @since 0.1
@@ -174,20 +170,18 @@ public abstract class DBConnection implements AutoCloseable {
      */
     @NotNull
     public Set<Table<?, ?>> getAllTables() throws QueryFailedException {
-        if (tablesCache.isEmpty()) {
-            QueryGenerator queryGenerator = getDbms()
-                    .getQueryGenerator();
-            try {
-                String query = queryGenerator.generateQueryTableNamesStatement(getDatabaseName());
-                List<List<String>> result = execQuery(query);
-                for (List<String> row : result) {
-                    tablesCache.add(new Table<>(row.get(0)));
-                }
-            } catch (GenerationFailedException ex) {
-                throw new QueryFailedException("Could not request existing tables", ex);
-            }
+        QueryGenerator queryGenerator = getDbms()
+                .getQueryGenerator();
+        String query;
+        try {
+            query = queryGenerator.generateQueryTableNamesStatement(getDatabaseName());
+        } catch (GenerationFailedException ex) {
+            throw new QueryFailedException("Could not request existing tables", ex);
         }
-        return tablesCache;
+        return execQuery(query)
+                .stream()
+                .map(row -> new Table<>(row.get(0)))
+                .collect(Collectors.toSet());
     }
 
     /**
