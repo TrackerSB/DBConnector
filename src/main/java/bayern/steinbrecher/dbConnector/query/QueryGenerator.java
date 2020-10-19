@@ -7,6 +7,7 @@ import bayern.steinbrecher.dbConnector.scheme.TableScheme;
 import com.google.common.collect.BiMap;
 import freemarker.core.Environment;
 import freemarker.template.Configuration;
+import freemarker.template.SimpleScalar;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -184,12 +186,15 @@ public class QueryGenerator {
             if (arguments.isEmpty()) {
                 throw new TemplateModelException("The identifier to quote is missing");
             } else {
+                if(arguments.size() > 1){
+                    LOGGER.log(Level.WARNING, "quoteIdentifier(...) got more than just one argument");
+                }
                 Object identifierCandidate = arguments.get(0);
-                if (identifierCandidate instanceof String) {
-                    return quoteIdentifier((String) identifierCandidate);
+                if (identifierCandidate instanceof SimpleScalar) {
+                    return quoteIdentifier(((SimpleScalar) identifierCandidate).getAsString());
                 } else {
                     throw new TemplateModelException(
-                            "The given argument is not of type " + String.class.getSimpleName());
+                            "The given argument is not of type " + SimpleScalar.class.getSimpleName());
                 }
             }
         }
