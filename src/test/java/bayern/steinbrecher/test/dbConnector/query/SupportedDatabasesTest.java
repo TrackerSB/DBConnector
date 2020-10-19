@@ -20,6 +20,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.time.LocalDate;
@@ -105,6 +106,16 @@ public class SupportedDatabasesTest {
     static void stopDatabases() throws ManagedProcessException {
         CONNECTIONS.forEach(DBConnection::close);
         MYSQL_DB.stop();
+    }
+
+    /**
+     * @since 0.10
+     */
+    @ParameterizedTest(name = "Check existence of database")
+    @EnumSource(SupportedDatabases.class)
+    void checkExistenceOfTestDatabase(SupportedDatabases dbms){
+        assertDoesNotThrow(() -> dbms.getQueryGenerator().generateCheckDatabaseExistenceStatement(DB_NAME));
+        assumeTrue(false, "Can not check existence of database without being connected");
     }
 
     private static Stream<Arguments> provideConnections() {
