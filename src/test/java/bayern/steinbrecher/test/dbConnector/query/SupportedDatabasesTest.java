@@ -37,6 +37,7 @@ import java.util.stream.Stream;
 
 import static bayern.steinbrecher.test.dbConnector.utility.AssumptionUtility.assumeDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -111,11 +112,13 @@ public class SupportedDatabasesTest {
     /**
      * @since 0.10
      */
-    @ParameterizedTest(name = "Check existence of database")
-    @EnumSource(SupportedDatabases.class)
-    void checkExistenceOfTestDatabase(SupportedDatabases dbms){
-        assertDoesNotThrow(() -> dbms.getQueryGenerator().generateCheckDatabaseExistenceStatement(DB_NAME));
-        assumeTrue(false, "Can not check existence of database without being connected");
+    @ParameterizedTest(name = "Check existence of databases")
+    @MethodSource("provideConnections")
+    void checkExistenceOfTestDatabase(@NotNull DBConnection connection){
+        String dbExistenceQuery = assertDoesNotThrow(
+                () -> connection.getDbms().getQueryGenerator().generateCheckDatabaseExistenceStatement(DB_NAME));
+        List<List<String>> databases = assertDoesNotThrow(() -> connection.execQuery(dbExistenceQuery));
+        assertEquals(databases.get(1).get(0), "1");
     }
 
     private static Stream<Arguments> provideConnections() {

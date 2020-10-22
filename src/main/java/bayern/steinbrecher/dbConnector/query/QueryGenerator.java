@@ -132,6 +132,10 @@ public class QueryGenerator {
         }
     }
 
+    /**
+     * Since database connections currently (220-10-22) require to specify a database already on creation there not too
+     * much use in checking the existence of the database already connected to, i.e. this query is not too useful.
+     */
     @NotNull
     public String generateCheckDatabaseExistenceStatement(@NotNull String dbName) throws GenerationFailedException {
         return populateTemplate(checkDBExistenceTemplate, Map.of("dbName", Objects.requireNonNull(dbName)));
