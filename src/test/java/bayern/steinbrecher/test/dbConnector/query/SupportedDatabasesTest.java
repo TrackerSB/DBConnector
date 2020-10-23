@@ -53,6 +53,7 @@ public class SupportedDatabasesTest {
     private static final String DB_PASSWORD = "password";
     private static final SimpleCredentials DB_SIMPLE_CREDENTIALS = new SimpleCredentials(DB_USERNAME, DB_PASSWORD);
 
+    private static final String MYSQL_DB_HOST = "localhost";
     private static final int MYSQL_DB_PORT = 3306;
     private static DB MYSQL_DB;
 
@@ -99,7 +100,7 @@ public class SupportedDatabasesTest {
         MYSQL_DB.start();
         MYSQL_DB.createDB(DB_NAME, DB_USERNAME, DB_PASSWORD);
         CONNECTIONS.add(new SimpleConnection(
-                SupportedDatabases.MY_SQL, "localhost", MYSQL_DB_PORT, DB_NAME, DB_SIMPLE_CREDENTIALS, false
+                SupportedDatabases.MY_SQL, MYSQL_DB_HOST, MYSQL_DB_PORT, DB_NAME, DB_SIMPLE_CREDENTIALS, false
         ));
     }
 
