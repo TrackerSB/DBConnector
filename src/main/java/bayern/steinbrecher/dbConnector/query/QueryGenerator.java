@@ -78,7 +78,7 @@ public class QueryGenerator {
         templateConfig.setWrapUncheckedExceptions(true);
         templateConfig.setFallbackOnNullLoopVariable(false);
         try {
-            templateConfig.setClassLoaderForTemplateLoading(SupportedDatabases.class.getClassLoader(),
+            templateConfig.setClassLoaderForTemplateLoading(TEMPLATE_PROVIDING_CLASS.getClassLoader(),
                     TEMPLATE_DIR_BASE_PATH.resolve(Objects.requireNonNull(templateDirectoryPath)).toString());
 
             checkDBExistenceTemplate = templateConfig.getTemplate("checkDBExistence.ftlh");
