@@ -191,7 +191,7 @@ public class QueryGenerator {
             if (arguments.isEmpty()) {
                 throw new TemplateModelException("The identifier to quote is missing");
             } else {
-                if(arguments.size() > 1){
+                if (arguments.size() > 1) {
                     LOGGER.log(Level.WARNING, "quoteIdentifier(...) got more than just one argument");
                 }
                 Object identifierCandidate = arguments.get(0);
@@ -213,7 +213,7 @@ public class QueryGenerator {
                 throw new TemplateModelException("The parameter for the column to get its type from is missing");
             } else {
                 Object columnPatternCandidate = arguments.get(0);
-                if(columnPatternCandidate instanceof StringModel) {
+                if (columnPatternCandidate instanceof StringModel) {
                     Object wrappedColumnPattern = ((StringModel) columnPatternCandidate).getWrappedObject();
                     if (wrappedColumnPattern instanceof ColumnPattern) {
                         ColumnPattern<?, ?> columnPattern = (ColumnPattern<?, ?>) wrappedColumnPattern;
