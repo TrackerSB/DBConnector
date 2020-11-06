@@ -11,4 +11,6 @@ module bayern.steinbrecher.DBConnector {
     requires java.logging;
     requires java.sql;
     requires org.jetbrains.annotations;
+
+    opens bayern.steinbrecher.dbConnector.query.templates.mysql;
 }
