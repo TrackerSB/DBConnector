@@ -12,5 +12,6 @@ module bayern.steinbrecher.DBConnector {
     requires java.sql;
     requires org.jetbrains.annotations;
 
+    // FIXME Open to whom?
     opens bayern.steinbrecher.dbConnector.query.templates.mysql;
 }
