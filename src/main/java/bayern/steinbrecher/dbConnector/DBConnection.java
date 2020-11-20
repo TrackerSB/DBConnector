@@ -79,7 +79,7 @@ public abstract class DBConnection implements AutoCloseable {
             return !result.isEmpty()
                     && !result.get(0).isEmpty()
                     && Integer.parseInt(result.get(0).get(0)) > 0;
-        } catch (GenerationFailedException ex) {
+        } catch (GenerationFailedException | NumberFormatException ex) {
             throw new QueryFailedException(String
                     .format("Could not check existence of database '%s'", getDatabaseName()), ex);
         }
