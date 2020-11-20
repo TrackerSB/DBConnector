@@ -12,6 +12,7 @@ repositories {
 }
 
 dependencies {
+    implementation "bayern.steinbrecher:JavaUtility:0.8"
     implementation "bayern.steinbrecher:jsch:0.1.57"
     implementation "com.google.guava:guava:29.0-jre"
     implementation "org.mariadb.jdbc:mariadb-java-client:2.7.0"

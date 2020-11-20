@@ -5,6 +5,7 @@ module bayern.steinbrecher.DBConnector {
     exports bayern.steinbrecher.dbConnector.scheme;
     exports bayern.steinbrecher.dbConnector.utility;
 
+    requires bayern.steinbrecher.Utility;
     requires bayern.steinbrecher.jsch;
     requires com.google.common;
     requires org.freemarker;

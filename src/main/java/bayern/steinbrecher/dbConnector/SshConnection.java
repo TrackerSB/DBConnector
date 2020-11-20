@@ -3,20 +3,16 @@ package bayern.steinbrecher.dbConnector;
 import bayern.steinbrecher.dbConnector.credentials.SshCredentials;
 import bayern.steinbrecher.dbConnector.query.QueryFailedException;
 import bayern.steinbrecher.dbConnector.query.SupportedDatabases;
+import bayern.steinbrecher.javaUtility.IOUtility;
 import bayern.steinbrecher.jsch.ChannelExec;
 import bayern.steinbrecher.jsch.JSch;
 import bayern.steinbrecher.jsch.JSchException;
 import bayern.steinbrecher.jsch.Session;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -38,7 +34,6 @@ import java.util.stream.Collectors;
 public final class SshConnection extends DBConnection {
 
     private static final Logger LOGGER = Logger.getLogger(SshConnection.class.getName());
-    private static final int SSH_MSG_BUFFER_SIZE = 1024;
     private static final Map<SupportedDatabases, String> COMMANDS = Map.of(SupportedDatabases.MY_SQL, "mysql");
     private final Map<SupportedDatabases, Function<String, String>> sqlCommands = new HashMap<>();
     /**
@@ -176,34 +171,26 @@ public final class SshConnection extends DBConnection {
     private String execCommand(@NotNull String command) throws JSchException, CommandException, IOException {
         String result;
         ChannelExec channel = (ChannelExec) sshSession.openChannel("exec");
-        ByteArrayOutputStream errStream = new ByteArrayOutputStream();
-        channel.setErrStream(errStream);
         channel.setInputStream(null);
         channel.setCommand(command);
         InputStream inStream = channel.getInputStream();
+        InputStream errStream = channel.getErrStream();
 
         channel.connect();
 
-        String errorMessage = errStream.toString(charset.name());
-        if (errorMessage.toLowerCase(Locale.ROOT).contains("error")) {
-            throw new CommandException("The given command returned following error:\n" + errorMessage);
-        }
-
-        StringBuilder output = new StringBuilder();
-        try (ReadableByteChannel rbc = Channels.newChannel(inStream)) {
-            ByteBuffer byteBuffer = ByteBuffer.allocate(SSH_MSG_BUFFER_SIZE);
-            CharBuffer charBuffer;
-            while (rbc.read(byteBuffer) != -1) {
-                byteBuffer.flip();
-                charBuffer = charset.decode(byteBuffer);
-                output.append(charBuffer);
-                byteBuffer.clear();
+        String errorStreamContent = IOUtility.readAll(errStream, charset);
+        if (!errorStreamContent.isBlank()) {
+            String errorMessage = "The given command returned following error:\n" + errorStreamContent;
+            if (errorStreamContent.toLowerCase(Locale.ROOT).contains("error")) {
+                channel.disconnect();
+                throw new CommandException(errorMessage);
+            } else {
+                LOGGER.log(Level.WARNING, errorMessage);
             }
         }
-        result = output.toString();
+        result = IOUtility.readAll(inStream, charset);
 
         channel.disconnect();
-
         return result;
     }
 
