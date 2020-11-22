@@ -76,9 +76,9 @@ public abstract class DBConnection implements AutoCloseable {
                     .getQueryGenerator();
             List<List<String>> result
                     = execQuery(queryGenerator.generateCheckDatabaseExistenceStatement(getDatabaseName()));
-            return !result.isEmpty()
-                    && !result.get(0).isEmpty()
-                    && Integer.parseInt(result.get(0).get(0)) > 0;
+            return result.size() > 1
+                    && !result.get(1).isEmpty()
+                    && Integer.parseInt(result.get(1).get(0)) > 0;
         } catch (GenerationFailedException | NumberFormatException ex) {
             throw new QueryFailedException(String
                     .format("Could not check existence of database '%s'", getDatabaseName()), ex);
