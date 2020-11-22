@@ -146,8 +146,11 @@ public final class SshConnection extends DBConnection {
                             //CHECKSTYLE.OFF: MagicNumber - May add 256 to make sure the byte has a positive value.
                             int toConvert = utf8byte < 0 ? utf8byte + 256 : utf8byte;
                             //CHECKSTYLE.ON: MagicNumber
+                            String asciiRepresentation = Integer.toHexString(toConvert);
+                            String zeroLeftPad = (asciiRepresentation.length() < 2) ? "0" : "";
                             ascii.append("\\x")
-                                    .append(Integer.toHexString(toConvert));
+                                    .append(zeroLeftPad)
+                                    .append(asciiRepresentation);
                         }
                     }
                 });
