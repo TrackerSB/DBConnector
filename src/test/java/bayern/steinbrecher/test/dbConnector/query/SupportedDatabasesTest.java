@@ -116,10 +116,7 @@ public class SupportedDatabasesTest {
     @ParameterizedTest(name = "Check existence of databases")
     @MethodSource("provideConnections")
     void checkExistenceOfTestDatabase(@NotNull DBConnection connection){
-        String dbExistenceQuery = assertDoesNotThrow(
-                () -> connection.getDbms().getQueryGenerator().generateCheckDatabaseExistenceStatement(DB_NAME));
-        List<List<String>> databases = assertDoesNotThrow(() -> connection.execQuery(dbExistenceQuery));
-        assertEquals(databases.get(1).get(0), "1");
+        assertTrue(assertDoesNotThrow(connection::databaseExists));
     }
 
     private static Stream<Arguments> provideConnections() {
