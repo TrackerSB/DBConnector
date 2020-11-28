@@ -181,7 +181,7 @@ public final class SshConnection extends DBConnection {
 
         channel.connect();
 
-        String errorStreamContent = IOUtility.readAll(errStream, charset);
+        String errorStreamContent = IOUtility.readAll(errStream, charset).trim();
         if (!errorStreamContent.isBlank()) {
             String errorMessage = "The given command returned following error:\n" + errorStreamContent;
             if (errorStreamContent.toLowerCase(Locale.ROOT).contains("error")) {
