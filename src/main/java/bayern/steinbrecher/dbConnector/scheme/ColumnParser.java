@@ -107,17 +107,14 @@ public abstract /* final */ class ColumnParser<T> {
         @Override
         @NotNull
         public Optional<LocalDate> parse(@Nullable String value) {
-            if (value == null) {
-                //NOTE This case was introduced to throw a DateTimeParseException instead of a NPE.
-                throw new DateTimeParseException("Can´t parse null", "null", 0);
-            }
-
             LocalDate date = null;
-            try {
-                date = LocalDate.parse(value);
-            } catch (DateTimeParseException ex) {
-                Logger.getLogger(ColumnParser.class.getName())
-                        .log(Level.WARNING, value + " is an invalid date", ex);
+            if(value != null) {
+                try {
+                    date = LocalDate.parse(value);
+                } catch (DateTimeParseException ex) {
+                    Logger.getLogger(ColumnParser.class.getName())
+                            .log(Level.WARNING, value + " is an invalid date", ex);
+                }
             }
             return Optional.ofNullable(date);
         }
