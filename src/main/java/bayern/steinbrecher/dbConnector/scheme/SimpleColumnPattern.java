@@ -6,6 +6,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Represents a {@link ColumnPattern} representing a <strong>specific</strong> column name instead of an actual pattern
@@ -17,7 +19,7 @@ import java.util.function.BiFunction;
  * @since 0.1
  */
 public class SimpleColumnPattern<T, U> extends ColumnPattern<T, U> {
-
+    private static final Logger LOGGER = Logger.getLogger(SimpleColumnPattern.class.getName());
     private final String realColumnName;
     private final Optional<Optional<T>> defaultValue;
     private final BiFunction<U, T, U> setter;
@@ -75,11 +77,16 @@ public class SimpleColumnPattern<T, U> extends ColumnPattern<T, U> {
     @Override
     @NotNull
     protected U combineImpl(@NotNull U toSet, @NotNull String columnName, @Nullable String valueToParse) {
-        T parsedValue = getParser()
-                .parse(valueToParse)
-                .orElseThrow(
-                        () -> new IllegalArgumentException(getRealColumnName() + " can not parse " + valueToParse));
-        return setter.apply(toSet, parsedValue);
+        try {
+            T parsedValue = getParser()
+                    .parse(valueToParse);
+            return setter.apply(toSet, parsedValue);
+        } catch (ParseException ex) {
+            LOGGER.log(Level.WARNING,
+                    String.format("Could not parse value '%s' for column '%s'. The value is skipped.",
+                            valueToParse, columnName));
+            return toSet;
+        }
     }
 
     /**

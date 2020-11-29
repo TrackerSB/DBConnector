@@ -24,9 +24,9 @@ public abstract /* final */ class ColumnParser<T> {
      */
     public static final ColumnParser<String> STRING_COLUMN_PARSER = new ColumnParser<>() {
         @Override
-        @NotNull
-        public Optional<String> parse(@Nullable String value) {
-            return Optional.ofNullable(value);
+        @Nullable
+        public String parse(@Nullable String value) {
+            return value;
         }
 
         @Override
@@ -51,18 +51,14 @@ public abstract /* final */ class ColumnParser<T> {
      */
     public static final ColumnParser<Integer> INTEGER_COLUMN_PARSER = new ColumnParser<>() {
         @Override
-        @NotNull
-        public Optional<Integer> parse(@Nullable String value) {
-            Optional<Integer> parsedValue;
-            if (value == null) {
-                parsedValue = Optional.empty();
-            } else {
+        @Nullable
+        public Integer parse(@Nullable String value) throws ParseException {
+            Integer parsedValue = null;
+            if (value != null) {
                 try {
-                    parsedValue = Optional.of(Integer.parseInt(value));
+                    parsedValue = Integer.parseInt(value);
                 } catch (NumberFormatException ex) {
-                    Logger.getLogger(ColumnParser.class.getName())
-                            .log(Level.WARNING, null, ex);
-                    parsedValue = Optional.empty();
+                    throw new ParseException(ex);
                 }
             }
             return parsedValue;
@@ -79,13 +75,13 @@ public abstract /* final */ class ColumnParser<T> {
      */
     public static final ColumnParser<Boolean> BOOLEAN_COLUMN_PARSER = new ColumnParser<>() {
         @Override
-        @NotNull
-        public Optional<Boolean> parse(@Nullable String value) {
-            if (value == null) {
-                return Optional.empty();
-            } else {
-                return Optional.of("1".equalsIgnoreCase(value));
+        @Nullable
+        public Boolean parse(@Nullable String value) {
+            Boolean parsedValue = null;
+            if (value != null) {
+                parsedValue = "1".equalsIgnoreCase(value);
             }
+            return parsedValue;
         }
 
         @Override
@@ -105,18 +101,17 @@ public abstract /* final */ class ColumnParser<T> {
      */
     public static final ColumnParser<LocalDate> LOCALDATE_COLUMN_PARSER = new ColumnParser<>() {
         @Override
-        @NotNull
-        public Optional<LocalDate> parse(@Nullable String value) {
+        @Nullable
+        public LocalDate parse(@Nullable String value) throws ParseException {
             LocalDate date = null;
             if(value != null) {
                 try {
                     date = LocalDate.parse(value);
                 } catch (DateTimeParseException ex) {
-                    Logger.getLogger(ColumnParser.class.getName())
-                            .log(Level.WARNING, value + " is an invalid date", ex);
+                    throw new ParseException(ex);
                 }
             }
-            return Optional.ofNullable(date);
+            return date;
         }
 
         @Override
@@ -136,18 +131,14 @@ public abstract /* final */ class ColumnParser<T> {
      */
     public static final ColumnParser<Double> DOUBLE_COLUMN_PARSER = new ColumnParser<>() {
         @Override
-        @NotNull
-        public Optional<Double> parse(@Nullable String value) {
-            Optional<Double> parsedValue;
-            if (value == null) {
-                parsedValue = Optional.empty();
-            } else {
+        @Nullable
+        public Double parse(@Nullable String value) throws ParseException {
+            Double parsedValue = null;
+            if (value != null) {
                 try {
-                    parsedValue = Optional.of(Double.parseDouble(value));
+                    parsedValue = Double.parseDouble(value);
                 } catch (NumberFormatException ex) {
-                    Logger.getLogger(ColumnParser.class.getName())
-                            .log(Level.WARNING, null, ex);
-                    parsedValue = Optional.empty();
+                    throw new ParseException(ex);
                 }
             }
             return parsedValue;
@@ -165,16 +156,10 @@ public abstract /* final */ class ColumnParser<T> {
     }
 
     /**
-     * Parses the given value to the appropriate type of this column if possible. Returns {@link Optional#empty()} if it
-     * could not be converted.
-     *
-     * @param value The value to parse.
-     * @return The typed value represented by {@code value}. Returns {@link Optional#empty()} if {@code value} is
-     * {@code null}.
-     * @since 0.1
+     * @since 0.14
      */
-    @NotNull
-    public abstract Optional<T> parse(@Nullable String value);
+    @Nullable
+    public abstract T parse(@Nullable String value) throws ParseException;
 
     /**
      * Returns the {@link String} representation of the given value suitable for SQL. NOTE: For implementation it can be
