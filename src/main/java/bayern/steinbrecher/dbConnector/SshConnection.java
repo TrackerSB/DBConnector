@@ -183,7 +183,8 @@ public final class SshConnection extends DBConnection {
 
         String errorStreamContent = IOUtility.readAll(errStream, charset).trim();
         if (!errorStreamContent.isBlank()) {
-            String errorMessage = "The given command returned following error:\n" + errorStreamContent;
+            String errorMessage
+                    = String.format("The command '%s' returned the following error:\n%s", command, errorStreamContent);
             if (errorStreamContent.toLowerCase(Locale.ROOT).contains("error")) {
                 channel.disconnect();
                 throw new CommandException(errorMessage);
