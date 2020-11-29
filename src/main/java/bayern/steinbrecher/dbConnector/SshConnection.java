@@ -208,14 +208,14 @@ public final class SshConnection extends DBConnection {
     @Override
     @NotNull
     public List<List<String>> execQuery(@NotNull String sqlCode) throws QueryFailedException {
-        LOGGER.log(Level.FINE, "Execute query: \"{0}\"", sqlCode);
+        LOGGER.log(Level.INFO, "Execute query: \"{0}\"", sqlCode);
         String result;
         try {
             result = execCommand(generateQueryCommand(Objects.requireNonNull(sqlCode)));
         } catch (JSchException | CommandException | IOException ex) {
             throw new QueryFailedException(ex);
         }
-        LOGGER.log(Level.FINE, "Query result:\n{0}", result);
+        LOGGER.log(Level.INFO, "Query result:\n{0}", result);
         String[] rows = result.split("\n");
 
         return Arrays.stream(rows)
