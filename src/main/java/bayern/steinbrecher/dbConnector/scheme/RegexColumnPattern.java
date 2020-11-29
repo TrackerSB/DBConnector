@@ -49,11 +49,8 @@ public class RegexColumnPattern<T, U, K> extends ColumnPattern<T, U> {
      * @since 0.1
      */
     @Override
-    protected U combineImpl(@NotNull U toSet, @NotNull String columnName, @Nullable String valueToParse) {
+    protected U combineImpl(@NotNull U toSet, @NotNull String columnName, @Nullable T value) {
         K key = keyExtractor.apply(columnName);
-        T parsedValue = getParser()
-                .parse(valueToParse)
-                .orElseThrow(() -> new IllegalArgumentException("Can not parse " + valueToParse));
-        return setter.accept(toSet, key, parsedValue);
+        return setter.accept(toSet, key, value);
     }
 }

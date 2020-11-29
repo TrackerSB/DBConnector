@@ -78,7 +78,16 @@ public abstract class ColumnPattern<T, U> {
             } else {
                 valueToParse = value;
             }
-            return combineImpl(toSet, columnName, valueToParse);
+            try {
+                T parsedValue = getParser()
+                        .parse(valueToParse);
+                return combineImpl(toSet, columnName, parsedValue);
+            } catch (ParseException ex) {
+                LOGGER.log(Level.WARNING,
+                        String.format("Could not parse value '%s' for column '%s'. The value is skipped.",
+                                valueToParse, columnName));
+                return toSet;
+            }
         } else {
             throw new IllegalArgumentException("The given column name does not match this pattern.");
         }
@@ -88,7 +97,7 @@ public abstract class ColumnPattern<T, U> {
      * @see #combine(Object, String, String)
      * @since 0.1
      */
-    protected abstract U combineImpl(@NotNull U toSet, @NotNull String columnName, @Nullable String valueToParse);
+    protected abstract U combineImpl(@NotNull U toSet, @NotNull String columnName, @Nullable T parsedValue);
 
     /**
      * Checks whether this pattern reflects the same column names as the given object. NOTE It is only checked whether

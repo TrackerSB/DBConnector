@@ -76,17 +76,8 @@ public class SimpleColumnPattern<T, U> extends ColumnPattern<T, U> {
      */
     @Override
     @NotNull
-    protected U combineImpl(@NotNull U toSet, @NotNull String columnName, @Nullable String valueToParse) {
-        try {
-            T parsedValue = getParser()
-                    .parse(valueToParse);
-            return setter.apply(toSet, parsedValue);
-        } catch (ParseException ex) {
-            LOGGER.log(Level.WARNING,
-                    String.format("Could not parse value '%s' for column '%s'. The value is skipped.",
-                            valueToParse, columnName));
-            return toSet;
-        }
+    protected U combineImpl(@NotNull U toSet, @NotNull String columnName, @Nullable T value) {
+        return setter.apply(toSet, value);
     }
 
     /**
