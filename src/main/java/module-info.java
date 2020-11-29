@@ -8,9 +8,10 @@ module bayern.steinbrecher.DBConnector {
     requires bayern.steinbrecher.Utility;
     requires bayern.steinbrecher.jsch;
     requires com.google.common;
-    requires org.freemarker;
     requires java.logging;
     requires java.sql;
+    requires javafx.base;
+    requires org.freemarker;
     requires org.jetbrains.annotations;
 
     // FIXME Open to whom?

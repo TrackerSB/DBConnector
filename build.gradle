@@ -1,18 +1,19 @@
 plugins {
     id "java-library"
+    id "org.openjfx.javafxplugin" version "0.0.9"
     id "maven-publish"
     id "signing"
 }
 
 group "bayern.steinbrecher"
-version "0.14-SNAPSHOT"
+version "0.14.13-SNAPSHOT"
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation "bayern.steinbrecher:JavaUtility:0.14"
+    implementation "bayern.steinbrecher:JavaUtility:0.15"
     implementation "bayern.steinbrecher:jsch:0.1.57"
     implementation "com.google.guava:guava:29.0-jre"
     implementation "org.mariadb.jdbc:mariadb-java-client:2.7.0"
@@ -37,6 +38,13 @@ java {
     modularity.inferModulePath = true
     withSourcesJar()
     withJavadocJar()
+}
+
+javafx {
+    version = "14"
+    modules = [
+            "javafx.base"
+    ]
 }
 
 test {

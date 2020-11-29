@@ -8,6 +8,7 @@ import bayern.steinbrecher.jsch.ChannelExec;
 import bayern.steinbrecher.jsch.JSch;
 import bayern.steinbrecher.jsch.JSchException;
 import bayern.steinbrecher.jsch.Session;
+import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -172,16 +173,15 @@ public final class SshConnection extends DBConnection {
 
     @NotNull
     private String execCommand(@NotNull String command) throws JSchException, CommandException, IOException {
-        String result;
         ChannelExec channel = (ChannelExec) sshSession.openChannel("exec");
         channel.setInputStream(null);
         channel.setCommand(command);
-        InputStream inStream = channel.getInputStream();
-        InputStream errStream = channel.getErrStream();
 
         channel.connect();
 
-        String errorStreamContent = IOUtility.readAll(errStream, charset).trim();
+        Pair<String, String> streamsContent = IOUtility.readChannelContinuously(channel);
+        String errorStreamContent = streamsContent.getValue();
+
         if (!errorStreamContent.isBlank()) {
             String errorMessage
                     = String.format("The command '%s' returned the following error:\n%s", command, errorStreamContent);
@@ -192,10 +192,9 @@ public final class SshConnection extends DBConnection {
                 LOGGER.log(Level.WARNING, errorMessage);
             }
         }
-        result = IOUtility.readAll(inStream, charset);
 
         channel.disconnect();
-        return result;
+        return streamsContent.getKey();
     }
 
     private String generateQueryCommand(String sqlCode) {
