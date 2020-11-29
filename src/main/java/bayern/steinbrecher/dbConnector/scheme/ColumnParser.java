@@ -134,7 +134,7 @@ public abstract /* final */ class ColumnParser<T> {
     /**
      * @since 0.1
      */
-    public static final ColumnParser<Double> DOUBLE_COLUMN_PARSER = new ColumnParser<Double>() {
+    public static final ColumnParser<Double> DOUBLE_COLUMN_PARSER = new ColumnParser<>() {
         @Override
         @NotNull
         public Optional<Double> parse(@Nullable String value) {
