@@ -125,4 +125,12 @@ public class TableScheme<T, E> {
     public Collection<ColumnPattern<?, E>> getOptionalColumns() {
         return optionalColumns;
     }
+
+    /**
+     * @since 0.14
+     */
+    @Override
+    public String toString() {
+        return getTableName();
+    }
 }
