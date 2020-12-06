@@ -12,7 +12,6 @@ import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -179,7 +178,7 @@ public final class SshConnection extends DBConnection {
 
         channel.connect();
 
-        Pair<String, String> streamsContent = IOUtility.readChannelContinuously(channel);
+        Pair<String, String> streamsContent = IOUtility.readChannelContinuously(channel, charset);
         String errorStreamContent = streamsContent.getValue();
 
         if (!errorStreamContent.isBlank()) {
