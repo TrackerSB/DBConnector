@@ -76,6 +76,8 @@ public class QueryGenerator {
         templateConfig.setDefaultEncoding(StandardCharsets.UTF_8.name());
         templateConfig.setOutputEncoding(StandardCharsets.UTF_8.name());
         templateConfig.setOutputFormat(PlainTextOutputFormat.INSTANCE);
+        templateConfig.setRecognizeStandardFileExtensions(false);
+        templateConfig.setAutoEscapingPolicy(Configuration.DISABLE_AUTO_ESCAPING_POLICY);
         templateConfig.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
         templateConfig.setLogTemplateExceptions(false);
         templateConfig.setWrapUncheckedExceptions(true);
