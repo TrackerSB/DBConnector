@@ -20,7 +20,20 @@ public abstract class QueryOperator<T> {
      * @since 0.8
      */
     public static final QueryOperator<String> CONTAINS
-            = new BinaryQueryOperator<>(ArgumentConverter.STRING_ARGUMENT_CONVERTER, "IN");
+            = new QueryOperator<>(ArgumentConverter.STRING_ARGUMENT_CONVERTER, "LIKE") {
+        @Override
+        public @NotNull QueryCondition<String> generateCondition(@NotNull QueryGenerator queryGenerator,
+                                                                 @NotNull Object... arguments) {
+            if (arguments.length != 2) {
+                throw new IllegalArgumentException("Exactly two arguments required");
+            }
+            String leftHand = getArgumentConverter()
+                    .convertArgument(queryGenerator, arguments[0]);
+            String rightHand = getArgumentConverter()
+                    .convertArgument(queryGenerator, arguments[1]);
+            return new QueryCondition<>(String.format("%s %s %%%s%%", leftHand, getOperatorSymbol(), rightHand));
+        }
+    };
     public static final Set<QueryOperator<String>> STRING_OPERATORS = Set.of(
             LIKE, CONTAINS
     );
