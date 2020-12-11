@@ -27,11 +27,18 @@ public abstract class QueryOperator<T> {
             if (arguments.length != 2) {
                 throw new IllegalArgumentException("Exactly two arguments required");
             }
-            String leftHand = getArgumentConverter()
+            String leftHandArgument = getArgumentConverter()
                     .convertArgument(queryGenerator, arguments[0]);
-            String rightHand = getArgumentConverter()
-                    .convertArgument(queryGenerator, arguments[1]);
-            return new QueryCondition<>(String.format("%s %s %%%s%%", leftHand, getOperatorSymbol(), rightHand));
+            Object unconvertedRightHandArgument;
+            if (arguments[1] instanceof String) {
+                unconvertedRightHandArgument = "%" + arguments[1] + "%";
+            } else {
+                unconvertedRightHandArgument = arguments[1];
+            }
+            String rightHandArgument = getArgumentConverter()
+                    .convertArgument(queryGenerator, unconvertedRightHandArgument);
+            return new QueryCondition<>(
+                    String.format("%s %s %s", leftHandArgument, getOperatorSymbol(), rightHandArgument));
         }
     };
     public static final Set<QueryOperator<String>> STRING_OPERATORS = Set.of(
