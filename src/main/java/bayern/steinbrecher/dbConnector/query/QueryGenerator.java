@@ -6,6 +6,7 @@ import bayern.steinbrecher.dbConnector.scheme.SimpleColumnPattern;
 import bayern.steinbrecher.dbConnector.scheme.TableScheme;
 import com.google.common.collect.BiMap;
 import freemarker.core.Environment;
+import freemarker.core.PlainTextOutputFormat;
 import freemarker.ext.beans.StringModel;
 import freemarker.template.Configuration;
 import freemarker.template.SimpleScalar;
@@ -73,6 +74,8 @@ public class QueryGenerator {
 
         Configuration templateConfig = new Configuration(Configuration.VERSION_2_3_30);
         templateConfig.setDefaultEncoding(StandardCharsets.UTF_8.name());
+        templateConfig.setOutputEncoding(StandardCharsets.UTF_8.name());
+        templateConfig.setOutputFormat(PlainTextOutputFormat.INSTANCE);
         templateConfig.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
         templateConfig.setLogTemplateExceptions(false);
         templateConfig.setWrapUncheckedExceptions(true);
