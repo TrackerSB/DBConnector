@@ -264,12 +264,14 @@ public abstract class DBConnection implements AutoCloseable {
                             getDatabaseName(), this);
                     List<List<String>> result = execQuery(query);
                     result.remove(0); // Skip headings
+                    int numAddedColumns = 0;
                     for (List<String> row : result) {
                         String columnName = row.get(0);
                         String columnTypeName = row.get(1);
                         Optional<Class<?>> columnType = queryGenerator.getType(columnTypeName);
                         if (columnType.isPresent()) {
-                            cachedColumns.add(new Column<>(columnName, columnType.get()));
+                            cachedColumns.add(new Column<>(columnName, columnType.get(), numAddedColumns));
+                            numAddedColumns++;
                         } else {
                             LOGGER.log(Level.INFO, String.format(
                                     "Skip column '%s' of table '%s' since it has an unsupported SQL type ('%s')",
@@ -314,15 +316,22 @@ public abstract class DBConnection implements AutoCloseable {
 
         private final String name;
         private final Class<T> columnType;
+        private final int index;
 
         /**
          * @param columnType The class of Java objects this column represents. Since this class represents existing
          *                   columns this type can only be determined at runtime.
+         * @param index      The index representing the ordering of the column in the table (starting with 0 for the
+         *                   first column)
          */
         // NOTE Only Table should be allowed to create Column objects
-        private Column(@NotNull String name, @NotNull Class<T> columnType) {
+        private Column(@NotNull String name, @NotNull Class<T> columnType, int index) {
+            if (index < 0) {
+                throw new IllegalArgumentException("The index must be not be negative");
+            }
             this.name = Objects.requireNonNull(name);
             this.columnType = Objects.requireNonNull(columnType);
+            this.index = index;
         }
 
         @NotNull
@@ -341,7 +350,8 @@ public abstract class DBConnection implements AutoCloseable {
         @NotNull
         @SuppressWarnings("unchecked")
         public static <C> Class<Column<C>> getTypeDummy(Class<C> runtimeGenericTypeProvider) {
-            return (Class<Column<C>>) new Column<C>("nonExistingColumnName", runtimeGenericTypeProvider).getClass();
+            //noinspection InstantiatingObjectToGetClassObject
+            return (Class<Column<C>>) new Column<C>("nonExistingColumnName", runtimeGenericTypeProvider, 0).getClass();
         }
 
         @Override
