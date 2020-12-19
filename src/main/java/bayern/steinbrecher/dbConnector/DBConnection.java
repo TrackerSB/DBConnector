@@ -355,7 +355,7 @@ public abstract class DBConnection implements AutoCloseable {
         @SuppressWarnings("unchecked")
         public static <C> Class<Column<C>> getTypeDummy(Class<C> runtimeGenericTypeProvider) {
             //noinspection InstantiatingObjectToGetClassObject
-            return (Class<Column<C>>) new Column<C>("nonExistingColumnName", runtimeGenericTypeProvider, 0).getClass();
+            return (Class<Column<C>>) new Column<>("nonExistingColumnName", runtimeGenericTypeProvider, 0).getClass();
         }
 
         @Override
