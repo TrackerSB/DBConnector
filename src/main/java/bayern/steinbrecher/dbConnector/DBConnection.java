@@ -344,6 +344,10 @@ public abstract class DBConnection implements AutoCloseable {
             return columnType;
         }
 
+        public int getIndex() {
+            return index;
+        }
+
         /**
          * Required for referencing the generic type of {@link Column} during runtime.
          */
