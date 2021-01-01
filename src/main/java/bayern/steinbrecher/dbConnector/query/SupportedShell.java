@@ -34,12 +34,24 @@ public abstract class SupportedShell {
         public boolean isCommandAvailable(
                 @NotNull String command, @NotNull Session sshSession, @NotNull Charset remoteCharset)
                 throws JSchException, CommandException, IOException {
+            // Command based on https://stackoverflow.com/a/677212/4863098
             String existenceCheckCommand = String.format(
                     "command -v %s >/dev/null 2>&1 || { echo \"Not installed\"; }", command);
             return !execCommand(existenceCheckCommand, sshSession, remoteCharset).equals("Not installed");
         }
     };
-    public static final List<SupportedShell> SHELLS = List.of(BASH);
+    public static final SupportedShell TCSH = new SupportedShell("tcsh") {
+        @Override
+        public boolean isCommandAvailable(@NotNull String command, @NotNull Session sshSession,
+                                          @NotNull Charset remoteCharset)
+                throws JSchException, CommandException, IOException {
+            // Command based on https://stackoverflow.com/a/22058620/4863098
+            String existenceCheckCommand = String.format(
+                    "(where %s == \"\" >/dev/null) || echo \"Not installed\"", command);
+            return !execCommand(existenceCheckCommand, sshSession, remoteCharset).equals("Not installed");
+        }
+    };
+    public static final List<SupportedShell> SHELLS = List.of(BASH, TCSH);
     private final String shellCommand;
 
     private SupportedShell(String shellCommand) {
@@ -86,7 +98,10 @@ public abstract class SupportedShell {
         String detectedShellCommand = POSIX_STANDARD_COMPLIANT_SHELL.execCommand("echo $0", sshSession, remoteCharset)
                 .trim();
         return SHELLS.stream()
-                .filter(shell -> shell.shellCommand.equals(detectedShellCommand))
+                /* NOTE The "-" in front of the command name symbolizes a login shell
+                 * (see https://stackoverflow.com/a/8451514/4863098)
+                 */
+                .filter(shell -> detectedShellCommand.matches("^-?bash" + shell.shellCommand + "$"))
                 .findAny()
                 .orElseThrow(() -> new UnsupportedShellException(
                         String.format("The shell '%s' is unsupported", detectedShellCommand)));
