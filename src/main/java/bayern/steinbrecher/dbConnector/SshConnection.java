@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 public final class SshConnection extends DBConnection {
 
     private static final Logger LOGGER = Logger.getLogger(SshConnection.class.getName());
-    private static final Map<SupportedDatabases, String> COMMANDS = Map.of(SupportedDatabases.MY_SQL, "mysql");
     private final Map<SupportedDatabases, Function<String, String>> sqlCommands = new HashMap<>();
     private final SupportedDatabases dbms;
     /**
@@ -96,7 +95,7 @@ public final class SshConnection extends DBConnection {
         //NOTE The echo command is needed for handling UTF8 chars on non UTF8 terminals.
         sqlCommands.put(dbms, query -> "echo -e '" + escapeSingleQuotes(replaceNonAscii(query))
                 + "' | "
-                + COMMANDS.get(dbms)
+                + dbms.getShellCommand()
                 + " --default-character-set=utf8"
                 + " -u" + credentials.getDbUsername()
                 + " -p" + credentials.getDbPassword()

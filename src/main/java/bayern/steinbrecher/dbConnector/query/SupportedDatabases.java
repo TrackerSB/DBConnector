@@ -16,7 +16,7 @@ public enum SupportedDatabases {
     /**
      * @since 0.1
      */
-    MY_SQL("MySQL", 3306,
+    MY_SQL("MySQL", 3306, "mysql",
             new QueryGenerator(
                     Paths.get("templates", "mysql"),
                     HashBiMap.create(Map.of(
@@ -31,11 +31,14 @@ public enum SupportedDatabases {
 
     private final String displayName;
     private final int defaultPort;
+    private final String shellCommand;
     private final QueryGenerator queryGenerator;
 
-    SupportedDatabases(@NotNull String displayName, int defaultPort, QueryGenerator queryGenerator) {
+    SupportedDatabases(@NotNull String displayName, int defaultPort, String shellCommand,
+                       QueryGenerator queryGenerator) {
         this.displayName = Objects.requireNonNull(displayName);
         this.defaultPort = defaultPort;
+        this.shellCommand = shellCommand;
         this.queryGenerator = queryGenerator;
     }
 
@@ -53,6 +56,13 @@ public enum SupportedDatabases {
      */
     public int getDefaultPort() {
         return defaultPort;
+    }
+
+    /**
+     * @since 0.15
+     */
+    public String getShellCommand() {
+        return shellCommand;
     }
 
     /**
