@@ -70,24 +70,20 @@ public final class SshConnection extends DBConnection {
     public SshConnection(@NotNull SupportedDatabases dbms, @NotNull String databaseHost, int databasePort,
                          @NotNull String databaseName, @NotNull String sshHost, int sshPort,
                          @NotNull Charset sshCharset, @NotNull SshCredentials credentials)
-            throws ConnectionFailedException {
+            throws ConnectionFailedException, AuthException, UnknownHostException {
         super(databaseName, dbms);
         this.dbms = dbms;
-        try {
-            this.sshSession = createSshSession(
-                    Objects.requireNonNull(credentials), Objects.requireNonNull(sshHost), sshPort);
-        } catch (AuthException ex) {
-            throw new ConnectionFailedException("Could not create SSH session", ex);
-        }
+        this.sshSession = createSshSession(
+                Objects.requireNonNull(credentials), Objects.requireNonNull(sshHost), sshPort);
         try {
             // FIXME Close connection at any potential exception point
             this.sshSession.connect();
         } catch (JSchException ex) {
             if (ex.getMessage().contains("Auth")) { //NOPMD
-                throw new ConnectionFailedException("Authentication failed", new AuthException(ex));
+                throw new AuthException("Authentication failed", ex);
             } else {
                 //NOPMD - UnknownHostException does not accept a cause.
-                throw new ConnectionFailedException(new UnknownHostException(ex.getMessage()));
+                throw new UnknownHostException(ex.getMessage());
             }
         }
         this.remoteShellCharset = Objects.requireNonNull(sshCharset);
