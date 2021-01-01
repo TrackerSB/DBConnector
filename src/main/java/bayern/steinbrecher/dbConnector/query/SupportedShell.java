@@ -83,7 +83,8 @@ public abstract class SupportedShell {
     public static SupportedShell determineRemoteShell(
             @NotNull Session sshSession, @NotNull Charset remoteCharset)
             throws JSchException, CommandException, IOException, UnsupportedShellException {
-        String detectedShellCommand = POSIX_STANDARD_COMPLIANT_SHELL.execCommand("echo $0", sshSession, remoteCharset);
+        String detectedShellCommand = POSIX_STANDARD_COMPLIANT_SHELL.execCommand("echo $0", sshSession, remoteCharset)
+                .trim();
         return SHELLS.stream()
                 .filter(shell -> shell.shellCommand.equals(detectedShellCommand))
                 .findAny()
