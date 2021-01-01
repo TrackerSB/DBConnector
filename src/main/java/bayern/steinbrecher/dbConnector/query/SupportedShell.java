@@ -101,7 +101,7 @@ public abstract class SupportedShell {
                 /* NOTE The "-" in front of the command name symbolizes a login shell
                  * (see https://stackoverflow.com/a/8451514/4863098)
                  */
-                .filter(shell -> detectedShellCommand.matches("^-?bash" + shell.shellCommand + "$"))
+                .filter(shell -> detectedShellCommand.matches("^-?" + shell.shellCommand + "$"))
                 .findAny()
                 .orElseThrow(() -> new UnsupportedShellException(
                         String.format("The shell '%s' is unsupported", detectedShellCommand)));
