@@ -64,6 +64,8 @@ public class QueryGenerator {
     private final Template searchQueryTemplate;
 
     /**
+     * NOTE Only the class {@link SupportedDatabases} should instantiate objects of this class.
+     *
      * @param templateDirectoryPath Specify either an absolute path where the root is the root of this JAR or a
      *                              relative path where the base directory is the package of {@link SupportedDatabases}.
      */
