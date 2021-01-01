@@ -3,12 +3,10 @@ package bayern.steinbrecher.dbConnector;
 import bayern.steinbrecher.dbConnector.credentials.SshCredentials;
 import bayern.steinbrecher.dbConnector.query.QueryFailedException;
 import bayern.steinbrecher.dbConnector.query.SupportedDatabases;
-import bayern.steinbrecher.javaUtility.IOUtility;
-import bayern.steinbrecher.jsch.ChannelExec;
+import bayern.steinbrecher.dbConnector.query.SupportedShell;
 import bayern.steinbrecher.jsch.JSch;
 import bayern.steinbrecher.jsch.JSchException;
 import bayern.steinbrecher.jsch.Session;
-import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -19,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
@@ -36,6 +33,7 @@ public final class SshConnection extends DBConnection {
     private static final Logger LOGGER = Logger.getLogger(SshConnection.class.getName());
     private static final Map<SupportedDatabases, String> COMMANDS = Map.of(SupportedDatabases.MY_SQL, "mysql");
     private final Map<SupportedDatabases, Function<String, String>> sqlCommands = new HashMap<>();
+    private final SupportedDatabases dbms;
     /**
      * The SSH session used to connect to the database over a secure channel.
      */
@@ -43,8 +41,8 @@ public final class SshConnection extends DBConnection {
     /**
      * The charset used by SSH response.
      */
-    private final Charset charset;
-    private final SupportedDatabases dbms;
+    private final Charset remoteShellCharset;
+    private final SupportedShell remoteShell;
 
     static {
         /* NOTE Config values must be separated with comma but WITHOUT space. Otherwise misleading exceptions like
@@ -72,12 +70,32 @@ public final class SshConnection extends DBConnection {
     public SshConnection(@NotNull SupportedDatabases dbms, @NotNull String databaseHost, int databasePort,
                          @NotNull String databaseName, @NotNull String sshHost, int sshPort,
                          @NotNull Charset sshCharset, @NotNull SshCredentials credentials)
-            throws AuthException, UnknownHostException, UnsupportedDatabaseException {
+            throws ConnectionFailedException {
         super(databaseName, dbms);
         this.dbms = dbms;
-        this.sshSession = createSshSession(
-                Objects.requireNonNull(credentials), Objects.requireNonNull(sshHost), sshPort);
-        this.charset = Objects.requireNonNull(sshCharset);
+        try {
+            this.sshSession = createSshSession(
+                    Objects.requireNonNull(credentials), Objects.requireNonNull(sshHost), sshPort);
+        } catch (AuthException ex) {
+            throw new ConnectionFailedException("Could not create SSH session", ex);
+        }
+        try {
+            // FIXME Close connection at any potential exception point
+            this.sshSession.connect();
+        } catch (JSchException ex) {
+            if (ex.getMessage().contains("Auth")) { //NOPMD
+                throw new ConnectionFailedException("Authentication failed", new AuthException(ex));
+            } else {
+                //NOPMD - UnknownHostException does not accept a cause.
+                throw new ConnectionFailedException(new UnknownHostException(ex.getMessage()));
+            }
+        }
+        this.remoteShellCharset = Objects.requireNonNull(sshCharset);
+        try {
+            this.remoteShell = SupportedShell.determineRemoteShell(sshSession, remoteShellCharset);
+        } catch (JSchException | CommandException | IOException | UnsupportedShellException ex) {
+            throw new ConnectionFailedException("Failed to determine SSH remote shell", ex);
+        }
 
         //NOTE The echo command is needed for handling UTF8 chars on non UTF8 terminals.
         sqlCommands.put(dbms, query -> "echo -e '" + escapeSingleQuotes(replaceNonAscii(query))
@@ -91,32 +109,10 @@ public final class SshConnection extends DBConnection {
                 + " " + databaseName);
 
         try {
-            this.sshSession.connect();
-
-            String result;
-            try {
-                result = execCommand(
-                        "command -v " + COMMANDS.get(dbms) + " >/dev/null 2>&1 || { echo \"Not installed\"; }");
-            } catch (CommandException | IOException ex) {
-                throw new UnsupportedDatabaseException(
-                        "The command to check existence of the correct database failed.", ex);
-            }
-            if (result.contains("Not installed")) {
-                throw new UnsupportedDatabaseException("The configured database is not supported by the SSH host.");
-            }
-
             //Check sql-host connection
             execQuery("SELECT 1");
-        } catch (QueryFailedException | JSchException ex) {
-            close();
-            /*
-             * A simple instanceof check is not sufficient => It can not be replaced by an additional catch clause.
-             */
-            if (ex instanceof JSchException && !ex.getMessage().contains("Auth")) { //NOPMD
-                throw new UnknownHostException(ex.getMessage()); //NOPMD - UnknownHostException does not accept a cause.
-            } else {
-                throw new AuthException("Auth fail", ex);
-            }
+        } catch (QueryFailedException ex) {
+            throw new ConnectionFailedException("Cannot execute SQL commands", ex);
         }
     }
 
@@ -171,32 +167,6 @@ public final class SshConnection extends DBConnection {
         }
     }
 
-    @NotNull
-    private String execCommand(@NotNull String command) throws JSchException, CommandException, IOException {
-        ChannelExec channel = (ChannelExec) sshSession.openChannel("exec");
-        channel.setInputStream(null);
-        channel.setCommand(command);
-
-        channel.connect();
-
-        Pair<String, String> streamsContent = IOUtility.readChannelContinuously(channel, charset);
-        String errorStreamContent = streamsContent.getValue();
-
-        if (!errorStreamContent.isBlank()) {
-            String errorMessage
-                    = String.format("The command '%s' returned the following error:\n%s", command, errorStreamContent);
-            if (errorStreamContent.toLowerCase(Locale.ROOT).contains("error")) {
-                channel.disconnect();
-                throw new CommandException(errorMessage);
-            } else {
-                LOGGER.log(Level.WARNING, errorMessage);
-            }
-        }
-
-        channel.disconnect();
-        return streamsContent.getKey();
-    }
-
     private String generateQueryCommand(String sqlCode) {
         return sqlCommands.get(dbms).apply(sqlCode);
     }
@@ -210,7 +180,8 @@ public final class SshConnection extends DBConnection {
         LOGGER.log(Level.FINE, "Execute query: \"{0}\"", sqlCode);
         String result;
         try {
-            result = execCommand(generateQueryCommand(Objects.requireNonNull(sqlCode)));
+            result = remoteShell.execCommand(
+                    generateQueryCommand(Objects.requireNonNull(sqlCode)), sshSession, remoteShellCharset);
         } catch (JSchException | CommandException | IOException ex) {
             throw new QueryFailedException(ex);
         }
@@ -232,7 +203,8 @@ public final class SshConnection extends DBConnection {
     @Override
     public void execUpdate(@NotNull String sqlCode) throws QueryFailedException {
         try {
-            execCommand(generateQueryCommand(Objects.requireNonNull(sqlCode)));
+            remoteShell.execCommand(
+                    generateQueryCommand(Objects.requireNonNull(sqlCode)), sshSession, remoteShellCharset);
         } catch (JSchException | CommandException | IOException ex) {
             throw new QueryFailedException(ex);
         }
