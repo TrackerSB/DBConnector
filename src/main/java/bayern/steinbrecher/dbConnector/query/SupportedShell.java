@@ -66,6 +66,7 @@ public abstract class SupportedShell {
 
         @Override
         protected String generateEchoCommand(String ascii) {
+            // FIXME Check availability of dspm option (see https://www.computerhope.com/unix/tcsh.htm)
             return String.format("set dspmbyte=\"utf8\" && printf '%s'", escapeSingleQuotes(replaceNonAscii(ascii)));
         }
     };
