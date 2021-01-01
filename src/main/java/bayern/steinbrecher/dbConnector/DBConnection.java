@@ -3,7 +3,7 @@ package bayern.steinbrecher.dbConnector;
 import bayern.steinbrecher.dbConnector.query.GenerationFailedException;
 import bayern.steinbrecher.dbConnector.query.QueryFailedException;
 import bayern.steinbrecher.dbConnector.query.QueryGenerator;
-import bayern.steinbrecher.dbConnector.query.SupportedDatabases;
+import bayern.steinbrecher.dbConnector.query.SupportedDBMS;
 import bayern.steinbrecher.dbConnector.scheme.ColumnPattern;
 import bayern.steinbrecher.dbConnector.scheme.SimpleColumnPattern;
 import bayern.steinbrecher.dbConnector.scheme.TableScheme;
@@ -28,12 +28,12 @@ public abstract class DBConnection implements AutoCloseable {
 
     private static final Logger LOGGER = Logger.getLogger(DBConnection.class.getName());
     private final String databaseName;
-    private final SupportedDatabases dbms;
+    private final SupportedDBMS dbms;
 
     /**
      * @since 0.1
      */
-    public DBConnection(@NotNull String databaseName, @NotNull SupportedDatabases dbms) {
+    public DBConnection(@NotNull String databaseName, @NotNull SupportedDBMS dbms) {
         this.databaseName = Objects.requireNonNull(databaseName);
         this.dbms = Objects.requireNonNull(dbms);
     }
@@ -225,7 +225,7 @@ public abstract class DBConnection implements AutoCloseable {
      * @since 0.3
      */
     @NotNull
-    public SupportedDatabases getDbms() {
+    public SupportedDBMS getDbms() {
         return dbms;
     }
 

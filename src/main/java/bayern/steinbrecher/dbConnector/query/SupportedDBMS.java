@@ -5,18 +5,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 /**
  * @author Stefan Huber
- * @since 0.1
+ * @since 0.15
  */
-public enum SupportedDatabases {
-    /**
-     * @since 0.1
-     */
-    MY_SQL("MySQL", 3306, "mysql",
+public abstract class SupportedDBMS {
+    public static final SupportedDBMS MY_SQL = new SupportedDBMS(
+            "MySQL", 3306, "mysql",
             new QueryGenerator(
                     Paths.get("templates", "mysql"),
                     HashBiMap.create(Map.of(
@@ -27,47 +26,41 @@ public enum SupportedDatabases {
                             String.class, new SQLTypeKeyword("VARCHAR", 255)
                     )),
                     '`')
-    );
+    ) {
+    };
+    public static final List<SupportedDBMS> DBMSs = List.of(MY_SQL);
 
     private final String displayName;
     private final int defaultPort;
     private final String shellCommand;
     private final QueryGenerator queryGenerator;
 
-    SupportedDatabases(@NotNull String displayName, int defaultPort, String shellCommand,
-                       QueryGenerator queryGenerator) {
+    private SupportedDBMS(@NotNull String displayName, int defaultPort, String shellCommand,
+                          QueryGenerator queryGenerator) {
         this.displayName = Objects.requireNonNull(displayName);
         this.defaultPort = defaultPort;
         this.shellCommand = shellCommand;
         this.queryGenerator = queryGenerator;
     }
 
-    /**
-     * @since 0.1
-     */
     @Override
     @NotNull
     public String toString() {
         return displayName;
     }
 
-    /**
-     * @since 0.1
-     */
+    public String getDisplayName() {
+        return displayName;
+    }
+
     public int getDefaultPort() {
         return defaultPort;
     }
 
-    /**
-     * @since 0.15
-     */
     public String getShellCommand() {
         return shellCommand;
     }
 
-    /**
-     * @since 0.5
-     */
     public QueryGenerator getQueryGenerator() {
         return queryGenerator;
     }

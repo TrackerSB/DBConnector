@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 public class QueryGenerator {
     private static final Logger LOGGER = Logger.getLogger(QueryGenerator.class.getName());
     // NOTE Allow creation only within {@link SupportedDatabases}
-    private static final Class<SupportedDatabases> TEMPLATE_PROVIDING_CLASS = SupportedDatabases.class;
+    private static final Class<SupportedDBMS> TEMPLATE_PROVIDING_CLASS = SupportedDBMS.class;
     @SuppressWarnings("Convert2Lambda")
     private static final Path TEMPLATE_DIR_BASE_PATH = new Callable<>() {
         @Override
@@ -64,10 +64,10 @@ public class QueryGenerator {
     private final Template searchQueryTemplate;
 
     /**
-     * NOTE Only the class {@link SupportedDatabases} should instantiate objects of this class.
+     * NOTE Only the class {@link SupportedDBMS} should instantiate objects of this class.
      *
      * @param templateDirectoryPath Specify either an absolute path where the root is the root of this JAR or a
-     *                              relative path where the base directory is the package of {@link SupportedDatabases}.
+     *                              relative path where the base directory is the package of {@link SupportedDBMS}.
      */
     QueryGenerator(@NotNull Path templateDirectoryPath, @NotNull BiMap<Class<?>, SQLTypeKeyword> types,
                    char identifierQuoteSymbol) {

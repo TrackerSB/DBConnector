@@ -7,7 +7,7 @@ import bayern.steinbrecher.dbConnector.DBConnection.Table;
 import bayern.steinbrecher.dbConnector.DatabaseNotFoundException;
 import bayern.steinbrecher.dbConnector.SimpleConnection;
 import bayern.steinbrecher.dbConnector.credentials.SimpleCredentials;
-import bayern.steinbrecher.dbConnector.query.SupportedDatabases;
+import bayern.steinbrecher.dbConnector.query.SupportedDBMS;
 import bayern.steinbrecher.dbConnector.scheme.ColumnParser;
 import bayern.steinbrecher.dbConnector.scheme.RegexColumnPattern;
 import bayern.steinbrecher.dbConnector.scheme.SimpleColumnPattern;
@@ -20,7 +20,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.time.LocalDate;
@@ -100,7 +99,7 @@ public class SupportedDatabasesTest {
         MYSQL_DB.start();
         MYSQL_DB.createDB(DB_NAME, DB_USERNAME, DB_PASSWORD);
         CONNECTIONS.add(new SimpleConnection(
-                SupportedDatabases.MY_SQL, MYSQL_DB_HOST, MYSQL_DB_PORT, DB_NAME, DB_SIMPLE_CREDENTIALS, false
+                SupportedDBMS.MY_SQL, MYSQL_DB_HOST, MYSQL_DB_PORT, DB_NAME, DB_SIMPLE_CREDENTIALS, false
         ));
     }
 

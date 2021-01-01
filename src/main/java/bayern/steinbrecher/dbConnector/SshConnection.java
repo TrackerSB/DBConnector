@@ -2,8 +2,9 @@ package bayern.steinbrecher.dbConnector;
 
 import bayern.steinbrecher.dbConnector.credentials.SshCredentials;
 import bayern.steinbrecher.dbConnector.query.QueryFailedException;
-import bayern.steinbrecher.dbConnector.query.SupportedDatabases;
+import bayern.steinbrecher.dbConnector.query.SupportedDBMS;
 import bayern.steinbrecher.dbConnector.query.SupportedShell;
+import bayern.steinbrecher.dbConnector.query.UnsupportedDBMSException;
 import bayern.steinbrecher.jsch.JSch;
 import bayern.steinbrecher.jsch.JSchException;
 import bayern.steinbrecher.jsch.Session;
@@ -12,14 +13,10 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -31,8 +28,9 @@ import java.util.stream.Collectors;
 public final class SshConnection extends DBConnection {
 
     private static final Logger LOGGER = Logger.getLogger(SshConnection.class.getName());
-    private final Map<SupportedDatabases, Function<String, String>> sqlCommands = new HashMap<>();
-    private final SupportedDatabases dbms;
+    private final String databaseHost;
+    private final int databasePort;
+    private final SshCredentials credentials;
     /**
      * The SSH session used to connect to the database over a secure channel.
      */
@@ -66,12 +64,14 @@ public final class SshConnection extends DBConnection {
     /**
      * @since 0.1
      */
-    public SshConnection(@NotNull SupportedDatabases dbms, @NotNull String databaseHost, int databasePort,
+    public SshConnection(@NotNull SupportedDBMS dbms, @NotNull String databaseHost, int databasePort,
                          @NotNull String databaseName, @NotNull String sshHost, int sshPort,
                          @NotNull Charset sshCharset, @NotNull SshCredentials credentials)
             throws ConnectionFailedException, AuthException, UnknownHostException {
         super(databaseName, dbms);
-        this.dbms = dbms;
+        this.databaseHost = databaseHost;
+        this.databasePort = databasePort;
+        this.credentials = credentials;
         this.sshSession = createSshSession(
                 Objects.requireNonNull(credentials), Objects.requireNonNull(sshHost), sshPort);
         try {
@@ -92,16 +92,7 @@ public final class SshConnection extends DBConnection {
             throw new ConnectionFailedException("Failed to determine SSH remote shell", ex);
         }
 
-        //NOTE The echo command is needed for handling UTF8 chars on non UTF8 terminals.
-        sqlCommands.put(dbms, query -> "echo -e '" + escapeSingleQuotes(replaceNonAscii(query))
-                + "' | "
-                + dbms.getShellCommand()
-                + " --default-character-set=utf8"
-                + " -u" + credentials.getDbUsername()
-                + " -p" + credentials.getDbPassword()
-                + " -h" + Objects.requireNonNull(databaseHost)
-                + " -P" + databasePort
-                + " " + databaseName);
+        // FIXME Check DBMS command availability (see SupportedShell#isCommandAvailable(...))
 
         try {
             //Check sql-host connection
@@ -109,44 +100,6 @@ public final class SshConnection extends DBConnection {
         } catch (QueryFailedException ex) {
             throw new ConnectionFailedException("Cannot execute SQL commands", ex);
         }
-    }
-
-    /**
-     * Escapes every single quote in such way that the resulting {@link String} can be inserted between single quotes.
-     *
-     * @param nonEscaped The {@link String} whose single quotes to escape.
-     * @return The {@link String} who can be quoted in single quotes itself.
-     */
-    @NotNull
-    private static String escapeSingleQuotes(@NotNull String nonEscaped) {
-        return nonEscaped.replace("'", "'\"'\"'");
-    }
-
-    @NotNull
-    private String replaceNonAscii(@NotNull String nonAscii) {
-        StringBuilder ascii = new StringBuilder();
-        nonAscii.chars()
-                .forEach(codePoint -> {
-                    Character character = (char) codePoint;
-                    //CHECKSTYLE.OFF: MagicNumber - 32-126 is the printable ascii range
-                    if (codePoint > 31 && codePoint < 127) {
-                        //CHECKSTYLE.ON: MagicNumber
-                        ascii.append(character);
-                    } else {
-                        byte[] bytes = String.valueOf(character).getBytes(StandardCharsets.UTF_8);
-                        for (byte utf8byte : bytes) {
-                            //CHECKSTYLE.OFF: MagicNumber - May add 256 to make sure the byte has a positive value.
-                            int toConvert = utf8byte < 0 ? utf8byte + 256 : utf8byte;
-                            //CHECKSTYLE.ON: MagicNumber
-                            String asciiRepresentation = Integer.toHexString(toConvert);
-                            String zeroLeftPad = (asciiRepresentation.length() < 2) ? "0" : "";
-                            ascii.append("\\x")
-                                    .append(zeroLeftPad)
-                                    .append(asciiRepresentation);
-                        }
-                    }
-                });
-        return ascii.toString();
     }
 
     @NotNull
@@ -162,10 +115,6 @@ public final class SshConnection extends DBConnection {
         }
     }
 
-    private String generateQueryCommand(String sqlCode) {
-        return sqlCommands.get(dbms).apply(sqlCode);
-    }
-
     /**
      * @since 0.1
      */
@@ -175,9 +124,10 @@ public final class SshConnection extends DBConnection {
         LOGGER.log(Level.FINE, "Execute query: \"{0}\"", sqlCode);
         String result;
         try {
-            result = remoteShell.execCommand(
-                    generateQueryCommand(Objects.requireNonNull(sqlCode)), sshSession, remoteShellCharset);
-        } catch (JSchException | CommandException | IOException ex) {
+            result = remoteShell.execQuery(
+                    getDbms(), credentials, databaseHost, databasePort, getDatabaseName(), sqlCode, sshSession,
+                    remoteShellCharset);
+        } catch (JSchException | CommandException | IOException | UnsupportedDBMSException ex) {
             throw new QueryFailedException(ex);
         }
         String[] rows = result.split("\n");
@@ -198,9 +148,10 @@ public final class SshConnection extends DBConnection {
     @Override
     public void execUpdate(@NotNull String sqlCode) throws QueryFailedException {
         try {
-            remoteShell.execCommand(
-                    generateQueryCommand(Objects.requireNonNull(sqlCode)), sshSession, remoteShellCharset);
-        } catch (JSchException | CommandException | IOException ex) {
+            remoteShell.execQuery(
+                    getDbms(), credentials, databaseHost, databasePort, getDatabaseName(), sqlCode, sshSession,
+                    remoteShellCharset);
+        } catch (JSchException | CommandException | IOException | UnsupportedDBMSException ex) {
             throw new QueryFailedException(ex);
         }
     }

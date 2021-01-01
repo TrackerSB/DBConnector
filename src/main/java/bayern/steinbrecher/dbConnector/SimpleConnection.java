@@ -2,7 +2,7 @@ package bayern.steinbrecher.dbConnector;
 
 import bayern.steinbrecher.dbConnector.credentials.SimpleCredentials;
 import bayern.steinbrecher.dbConnector.query.QueryFailedException;
-import bayern.steinbrecher.dbConnector.query.SupportedDatabases;
+import bayern.steinbrecher.dbConnector.query.SupportedDBMS;
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.Connection;
@@ -25,14 +25,14 @@ import java.util.logging.Logger;
 public final class SimpleConnection extends DBConnection {
 
     private static final Logger LOGGER = Logger.getLogger(SimpleConnection.class.getName());
-    private static final Map<SupportedDatabases, String> DRIVER_PROTOCOLS
-            = Map.of(SupportedDatabases.MY_SQL, "jdbc:mysql://");
+    private static final Map<SupportedDBMS, String> DRIVER_PROTOCOLS
+            = Map.of(SupportedDBMS.MY_SQL, "jdbc:mysql://");
     private Connection connection;
 
     /**
      * @since 0.10
      */
-    public SimpleConnection(@NotNull SupportedDatabases dbms, @NotNull String databaseHost, int databasePort,
+    public SimpleConnection(@NotNull SupportedDBMS dbms, @NotNull String databaseHost, int databasePort,
                             @NotNull String databaseName, @NotNull SimpleCredentials credentials, boolean useSSL)
             throws AuthException, DatabaseNotFoundException {
         super(databaseName, dbms);
@@ -48,7 +48,7 @@ public final class SimpleConnection extends DBConnection {
                             + (useSSL ? "&useSSL=true" : "")
                             + "&zeroDateTimeBehavior=CONVERT_TO_NULL"
                             + "&serverTimezone=UTC",
-                    credentials.getUsername(), credentials.getPassword());
+                    credentials.getDbUsername(), credentials.getDbPassword());
             //        } catch (CommunicationsException ex) { // FIXME Reintroduce exception case
             //            throw new UnknownHostException(ex.getMessage()); //NOPMD - UnknownHostException does not
             //            accept a cause.
@@ -66,7 +66,7 @@ public final class SimpleConnection extends DBConnection {
     /**
      * @since 0.1
      */
-    public SimpleConnection(@NotNull SupportedDatabases dbms, @NotNull String databaseHost, int databasePort,
+    public SimpleConnection(@NotNull SupportedDBMS dbms, @NotNull String databaseHost, int databasePort,
                             @NotNull String databaseName, @NotNull SimpleCredentials credentials)
             throws AuthException, DatabaseNotFoundException {
         this(dbms, databaseHost, databasePort, databaseName, credentials, true);
