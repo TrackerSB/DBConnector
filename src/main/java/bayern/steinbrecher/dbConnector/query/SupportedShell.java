@@ -33,6 +33,11 @@ public abstract class SupportedShell {
         }
 
         @Override
+        protected @NotNull String escapeForSingleQuotes(@NotNull String nonEscaped) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         protected String generateEchoCommand(String ascii) {
             throw new UnsupportedOperationException();
         }
@@ -49,8 +54,13 @@ public abstract class SupportedShell {
         }
 
         @Override
+        protected @NotNull String escapeForSingleQuotes(@NotNull String nonEscaped) {
+            return nonEscaped.replace("'", "'\"'\"'");
+        }
+
+        @Override
         protected String generateEchoCommand(String ascii) {
-            return String.format("echo -e '%s'", escapeSingleQuotes(replaceNonAscii(ascii)));
+            return String.format("echo -e '%s'", escapeForSingleQuotes(replaceNonAscii(ascii)));
         }
     };
     public static final SupportedShell TCSH = new SupportedShell("tcsh") {
@@ -65,9 +75,15 @@ public abstract class SupportedShell {
         }
 
         @Override
+        protected @NotNull String escapeForSingleQuotes(@NotNull String nonEscaped) {
+            return nonEscaped.replace("'", "'\"'\"'")
+                    .replace("%", "%%");
+        }
+
+        @Override
         protected String generateEchoCommand(String ascii) {
             // FIXME Check availability of dspm option (see https://www.computerhope.com/unix/tcsh.htm)
-            return String.format("set dspmbyte=\"utf8\" && printf '%s'", escapeSingleQuotes(replaceNonAscii(ascii)));
+            return String.format("set dspmbyte=\"utf8\" && printf '%s'", escapeForSingleQuotes(replaceNonAscii(ascii)));
         }
     };
     public static final List<SupportedShell> SHELLS = List.of(BASH, TCSH);
@@ -84,9 +100,7 @@ public abstract class SupportedShell {
      * @return The {@link String} who can be quoted in single quotes itself.
      */
     @NotNull
-    private static String escapeSingleQuotes(@NotNull String nonEscaped) {
-        return nonEscaped.replace("'", "'\"'\"'");
-    }
+    protected abstract String escapeForSingleQuotes(@NotNull String nonEscaped);
 
     @NotNull
     private static String replaceNonAscii(@NotNull String nonAscii) {
