@@ -180,6 +180,7 @@ public abstract class DBConnection implements AutoCloseable {
         }
         return execQuery(query)
                 .stream()
+                .skip(1) // Skip headings
                 .map(row -> new Table<>(row.get(0)))
                 .collect(Collectors.toSet());
     }
