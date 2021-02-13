@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -78,16 +79,17 @@ public abstract class ColumnPattern<T, U> {
             } else {
                 valueToParse = value;
             }
+            T parsedValue;
             try {
-                T parsedValue = getParser()
+                parsedValue = getParser()
                         .parse(valueToParse);
-                return combineImpl(toSet, columnName, parsedValue);
             } catch (ParseException ex) {
                 LOGGER.log(Level.WARNING,
                         String.format("Could not parse value '%s' for column '%s'. The value is skipped.",
                                 valueToParse, columnName));
-                return toSet;
+                parsedValue = null;
             }
+            return combineImpl(toSet, columnName, parsedValue);
         } else {
             throw new IllegalArgumentException("The given column name does not match this pattern.");
         }
