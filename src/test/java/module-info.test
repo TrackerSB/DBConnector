@@ -2,3 +2,7 @@
     org.junit.jupiter.params
 --add-reads
     bayern.steinbrecher.DBConnector=org.junit.jupiter.params
+--add-exports
+    org.junit.platform.commons/org.junit.platform.commons.logging=ALL-UNNAMED
+--add-exports
+    org.junit.platform.commons/org.junit.platform.commons.util=ALL-UNNAMED
