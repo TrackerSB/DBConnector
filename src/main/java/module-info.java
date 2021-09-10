@@ -12,6 +12,7 @@ module bayern.steinbrecher.DBConnector {
     requires java.logging;
     requires java.sql;
     requires javafx.base;
+    requires javafx.controls;
     requires org.jetbrains.annotations;
 
     // FIXME Open to whom?

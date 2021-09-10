@@ -106,8 +106,8 @@ public class QueryGenerator {
      * {@link Optional#empty()} if and only if for {@code sqlType} no class is defined.
      */
     @NotNull
-    public Optional<Class<?>> getType(@NotNull String sqlType) {
-        return Optional.ofNullable(types.inverse().get(new SQLTypeKeyword(sqlType)));
+    public <C> Optional<Class<C>> getType(@NotNull String sqlType) {
+        return Optional.ofNullable((Class<C>) types.inverse().get(new SQLTypeKeyword(sqlType)));
     }
 
     @NotNull
@@ -177,9 +177,9 @@ public class QueryGenerator {
      * @param conditions      List of conditions which is combined as conjunction.
      */
     @NotNull
-    public String generateSearchQueryStatement(@NotNull String dbName, @NotNull DBConnection.Table<?, ?> table,
-                                               @NotNull Iterable<DBConnection.Column<?>> columnsToSelect,
-                                               @NotNull Iterable<QueryCondition<?>> conditions)
+    public <T> String generateSearchQueryStatement(@NotNull String dbName, @NotNull DBConnection.Table<T, ?> table,
+                                                   @NotNull Iterable<DBConnection.Column<T, ?>> columnsToSelect,
+                                                   @NotNull Iterable<QueryCondition<?>> conditions)
             throws GenerationFailedException {
         // FIXME Check whether any involved columns are contained by the specified table
         return populateTemplate(

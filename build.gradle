@@ -46,7 +46,8 @@ targetCompatibility = "$sourceCompatibility" as Integer
 javafx {
     version = "$sourceCompatibility"
     modules = [
-            "javafx.base"
+            "javafx.base",
+            "javafx.controls"
     ]
 }
 

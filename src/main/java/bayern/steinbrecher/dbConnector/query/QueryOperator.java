@@ -157,11 +157,11 @@ public abstract class QueryOperator<T> {
                 LocalDate.class, Column.getTypeDummy(LocalDate.class), ColumnParser.LOCALDATE_COLUMN_PARSER);
 
         public final Class<T> runtimeGenericTypeProvider;
-        public final Class<Column<T>> runtimeGenericColumnTypeProvider;
+        public final Class<Column<?, T>> runtimeGenericColumnTypeProvider;
         public final ColumnParser<T> columnParser;
 
         private ArgumentConverter(@NotNull Class<T> runtimeGenericTypeProvider,
-                                  @NotNull Class<Column<T>> runtimeGenericColumnTypeProvider,
+                                  @NotNull Class<Column<?, T>> runtimeGenericColumnTypeProvider,
                                   @NotNull ColumnParser<T> columnParser) {
             this.runtimeGenericTypeProvider = Objects.requireNonNull(runtimeGenericTypeProvider);
             this.runtimeGenericColumnTypeProvider = Objects.requireNonNull(runtimeGenericColumnTypeProvider);

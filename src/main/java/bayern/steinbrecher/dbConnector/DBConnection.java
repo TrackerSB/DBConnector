@@ -4,10 +4,15 @@ import bayern.steinbrecher.dbConnector.query.GenerationFailedException;
 import bayern.steinbrecher.dbConnector.query.QueryFailedException;
 import bayern.steinbrecher.dbConnector.query.QueryGenerator;
 import bayern.steinbrecher.dbConnector.query.SupportedDBMS;
+import bayern.steinbrecher.dbConnector.scheme.ColumnParser;
 import bayern.steinbrecher.dbConnector.scheme.ColumnPattern;
 import bayern.steinbrecher.dbConnector.scheme.SimpleColumnPattern;
 import bayern.steinbrecher.dbConnector.scheme.TableScheme;
+import javafx.beans.value.ObservableValueBase;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
@@ -19,6 +24,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Stefan Huber
@@ -107,15 +113,15 @@ public abstract class DBConnection implements AutoCloseable {
      * @return The table to request all data from.
      * @since 0.1
      */
-    public <T> T getTableContent(@NotNull TableScheme<T, ?> tableScheme)
+    public <T, E> T getTableContent(@NotNull TableScheme<T, E> tableScheme)
             throws GenerationFailedException, QueryFailedException {
-        Set<SimpleColumnPattern<?, ?>> missingColumns = getMissingColumns(tableScheme);
+        Set<SimpleColumnPattern<?, E>> missingColumns = getMissingColumns(tableScheme);
         if (missingColumns.isEmpty()) {
             T tableContent;
             String searchQuery = getDbms()
                     .getQueryGenerator()
                     .generateSearchQueryStatement(getDatabaseName(), getTable(tableScheme).orElseThrow(),
-                            Collections.emptyList(), Collections.emptyList());
+                            Collections.EMPTY_LIST, Collections.emptyList());
             try {
                 tableContent = tableScheme.parseFrom(execQuery(searchQuery));
             } catch (QueryFailedException ex) {
@@ -134,9 +140,9 @@ public abstract class DBConnection implements AutoCloseable {
      * @since 0.5
      */
     @NotNull
-    public Set<SimpleColumnPattern<?, ?>> getMissingColumns(@NotNull TableScheme<?, ?> scheme)
+    public <T, E> Set<SimpleColumnPattern<?, E>> getMissingColumns(@NotNull TableScheme<T, E> scheme)
             throws QueryFailedException {
-        Set<Column<?>> cachedColumns = getAllColumns(scheme);
+        Set<Column<E, ?>> cachedColumns = getAllColumns(scheme);
         return scheme.getRequiredColumns()
                 .stream()
                 .filter(scp -> cachedColumns.stream().noneMatch(column -> scp.matches(column.getName())))
@@ -147,8 +153,8 @@ public abstract class DBConnection implements AutoCloseable {
      * @since 0.5
      */
     @NotNull
-    public Set<Column<?>> getAllColumns(@NotNull TableScheme<?, ?> tableScheme) throws QueryFailedException {
-        Optional<Table<?, ?>> table;
+    public <T, E> Set<Column<E, ?>> getAllColumns(@NotNull TableScheme<T, E> tableScheme) throws QueryFailedException {
+        Optional<Table<T, E>> table;
         try {
             table = getTable(tableScheme);
         } catch (QueryFailedException ex) {
@@ -166,44 +172,23 @@ public abstract class DBConnection implements AutoCloseable {
     }
 
     /**
-     * @since 0.5
+     * @since 0.6
      */
     @NotNull
-    public Set<Table<?, ?>> getAllTables() throws QueryFailedException {
+    public <T, E> Optional<Table<T, E>> getTable(@NotNull TableScheme<T, E> scheme) throws QueryFailedException {
         QueryGenerator queryGenerator = getDbms()
                 .getQueryGenerator();
         String query;
         try {
             query = queryGenerator.generateQueryTableNamesStatement(getDatabaseName());
         } catch (GenerationFailedException ex) {
-            throw new QueryFailedException("Could not request existing tables", ex);
+            throw new QueryFailedException("Could not check existence of table", ex);
         }
-        return execQuery(query)
+        boolean tableExists = execQuery(query)
                 .stream()
                 .skip(1) // Skip headings
-                .map(row -> new Table<>(row.get(0)))
-                .collect(Collectors.toSet());
-    }
-
-    /**
-     * NOTE In theory the generic parameters of input and output have to match. Due to type erasure of generic types
-     * this can not be guaranteed.
-     *
-     * @since 0.6
-     */
-    @NotNull
-    public Optional<Table<?, ?>> getTable(@NotNull TableScheme<?, ?> scheme) throws QueryFailedException {
-        try {
-            return getAllTables()
-                    .stream()
-                    .filter(table -> table.getTableName()
-                            .equalsIgnoreCase(Objects.requireNonNull(scheme).getTableName()))
-                    .findAny();
-        } catch (QueryFailedException ex) {
-            throw new QueryFailedException(
-                    String.format(
-                            "Could not check existence of table for table scheme '%s'", scheme.getTableName()), ex);
-        }
+                .anyMatch(row -> row.get(0).equalsIgnoreCase(scheme.getTableName()));
+        return Optional.ofNullable(tableExists ? new Table<>(scheme) : null);
     }
 
     /**
@@ -238,25 +223,36 @@ public abstract class DBConnection implements AutoCloseable {
      * @since 0.5
      */
     public class Table<T, E> {
-        private final String tableName;
+        private final TableScheme<T, E> scheme;
         /**
          * NOTE Should be a static local variable in {@link #getColumns()}
          */
-        private final Set<Column<?>> cachedColumns = new HashSet<>();
+        private final Set<Column<E, ?>> cachedColumns = new HashSet<>();
 
         // NOTE Only DBConnection should be allowed to create Table objects
-        private Table(@NotNull String tableName) {
-            this.tableName = Objects.requireNonNull(tableName);
+        private Table(@NotNull TableScheme<T, E> scheme) {
+            this.scheme = Objects.requireNonNull(scheme);
         }
 
         @NotNull
-        public String getTableName() {
-            return tableName;
+        public TableScheme<T, E> getTableScheme() {
+            return scheme;
+        }
+
+        @NotNull
+        private <C> Optional<ColumnPattern<C, E>> findColumnPattern(
+                @NotNull Class<C> columnType, @NotNull String columnName){
+            return Stream.concat(
+                    getTableScheme().getRequiredColumns().stream(),
+                    getTableScheme().getOptionalColumns().stream())
+                    .filter(cp -> cp.matches(columnName))
+                    .map(cp -> (ColumnPattern<C, E>) cp)
+                    .findAny();
         }
 
         @NotNull
         @Unmodifiable
-        public Set<Column<?>> getColumns() throws QueryFailedException {
+        public <C> Set<Column<E, ?>> getColumns() throws QueryFailedException {
             if (cachedColumns.isEmpty()) {
                 try {
                     QueryGenerator queryGenerator = getDbms()
@@ -269,22 +265,42 @@ public abstract class DBConnection implements AutoCloseable {
                     for (List<String> row : result) {
                         String columnName = row.get(0);
                         String columnTypeName = row.get(1);
-                        Optional<Class<?>> columnType = queryGenerator.getType(columnTypeName);
+                        Optional<Class<C>> columnType = queryGenerator.getType(columnTypeName);
                         if (columnType.isPresent()) {
-                            cachedColumns.add(new Column<>(columnName, columnType.get(), numAddedColumns));
+                            // FIXME Associate column patterns where available
+                            cachedColumns.add(new Column<E, C>(columnName, columnType.get(), numAddedColumns,
+                                    findColumnPattern(columnType.get(), columnName).orElse(null)));
                             numAddedColumns++;
                         } else {
                             LOGGER.log(Level.INFO, String.format(
                                     "Skip column '%s' of table '%s' since it has an unsupported SQL type ('%s')",
-                                    columnName, getTableName(), columnTypeName));
+                                    columnName, getTableScheme().getTableName(), columnTypeName));
                         }
                     }
                 } catch (GenerationFailedException ex) {
                     throw new QueryFailedException(
-                            String.format("Could not request existing columns of table '%s'", getTableName()), ex);
+                            String.format("Could not request existing columns of table '%s'",
+                                    getTableScheme().getTableName()), ex);
                 }
             }
             return Collections.unmodifiableSet(cachedColumns);
+        }
+
+        /**
+         * Return an empty {@link TableView} showing all columns this {@link Table} has.
+         *
+         * @since 0.16
+         */
+        @NotNull
+        public TableView<E> createTableView() throws QueryFailedException {
+            TableView<E> tableView = new TableView<>();
+            for (Column<E, ?> column : getColumns()) {
+                TableColumn<E, ?> tableViewColumn = column.createTableViewColumn();
+                tableViewColumn.setText(column.getName());
+                tableView.getColumns()
+                        .add(tableViewColumn);
+            }
+            return tableView;
         }
 
         @Override
@@ -296,12 +312,12 @@ public abstract class DBConnection implements AutoCloseable {
                 return false;
             }
             Table<?, ?> table = (Table<?, ?>) o;
-            return getTableName().equals(table.getTableName());
+            return getTableScheme().equals(table.getTableScheme());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(getTableName());
+            return Objects.hash(getTableScheme());
         }
     }
 
@@ -310,29 +326,35 @@ public abstract class DBConnection implements AutoCloseable {
      * {@link ColumnPattern} only represents patterns of column names in a {@link TableScheme} of a table which might
      * have been created.
      *
-     * @param <T> The type of Java objects this column represents.
+     * @param <E> The type of Java objects the containing table entry represents.
+     * @param <C> The type of Java objects this column represents.
      * @since 0.1
      */
-    public static class Column<T> {
+    // FIXME Unify the order of generic template parameters (TableColumn/Column vs ColumnPattern)
+    public static class Column<E, C> {
 
         private final String name;
-        private final Class<T> columnType;
+        private final Class<C> columnType;
         private final int index;
+        private final ColumnPattern<C, E> pattern;
 
         /**
          * @param columnType The class of Java objects this column represents. Since this class represents existing
          *                   columns this type can only be determined at runtime.
          * @param index      The index representing the ordering of the column in the table (starting with 0 for the
          *                   first column)
+         * @since 0.16
          */
-        // NOTE Only Table should be allowed to create Column objects
-        private Column(@NotNull String name, @NotNull Class<T> columnType, int index) {
+        // NOTE Only the class Table should be allowed to create Column objects
+        private Column(@NotNull String name, @NotNull Class<C> columnType, int index,
+                       @Nullable ColumnPattern<C, E> pattern) {
             if (index < 0) {
                 throw new IllegalArgumentException("The index must be not be negative");
             }
             this.name = Objects.requireNonNull(name);
             this.columnType = Objects.requireNonNull(columnType);
             this.index = index;
+            this.pattern = pattern;
         }
 
         @NotNull
@@ -341,7 +363,7 @@ public abstract class DBConnection implements AutoCloseable {
         }
 
         @NotNull
-        public Class<T> getColumnType() {
+        public Class<C> getColumnType() {
             return columnType;
         }
 
@@ -354,9 +376,10 @@ public abstract class DBConnection implements AutoCloseable {
          */
         @NotNull
         @SuppressWarnings("unchecked")
-        public static <C> Class<Column<C>> getTypeDummy(Class<C> runtimeGenericTypeProvider) {
+        public static <C> Class<Column<?, C>> getTypeDummy(Class<C> runtimeGenericTypeProvider) {
             //noinspection InstantiatingObjectToGetClassObject
-            return (Class<Column<C>>) new Column<>("nonExistingColumnName", runtimeGenericTypeProvider, 0).getClass();
+            return (Class<Column<?, C>>) new Column<>("nonExistingColumnName", runtimeGenericTypeProvider, 0, null)
+                    .getClass();
         }
 
         @Override
@@ -367,13 +390,41 @@ public abstract class DBConnection implements AutoCloseable {
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-            Column<?> column = (Column<?>) o;
+            Column<?, ?> column = (Column<?, ?>) o;
             return getName().equals(column.getName());
         }
 
         @Override
         public int hashCode() {
             return Objects.hash(getName());
+        }
+
+        /**
+         * Return a column which can be used for a {@link javafx.scene.control.TableView} that extracts a certain value of
+         * items of the given type and parses it with this {@link ColumnParser}.
+         *
+         * @return A {@link TableColumn} with a cell value factory but no name.
+         * @since 0.16
+         */
+        @NotNull
+        public TableColumn<E, C> createTableViewColumn() {
+            TableColumn<E, C> column = new TableColumn<>();
+            column.setCellValueFactory(features -> new ObservableValueBase<>() {
+                @Override
+                public C getValue() {
+                    C value;
+                    if (pattern == null) {
+                        LOGGER.log(Level.WARNING,
+                                String.format("No pattern provided for %s", features.getTableColumn().getText()));
+                        value = null;
+                    } else {
+                        value = pattern.getValue(features.getValue(), getName());
+                    }
+                    return value;
+                }
+            });
+            column.setEditable(false);
+            return column;
         }
     }
 }

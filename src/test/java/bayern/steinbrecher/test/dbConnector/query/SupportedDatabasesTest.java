@@ -36,7 +36,6 @@ import java.util.stream.Stream;
 
 import static bayern.steinbrecher.test.dbConnector.utility.AssumptionUtility.assumeDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -60,15 +59,15 @@ public class SupportedDatabasesTest {
 
     private static final List<SimpleColumnPattern<?, TestTableEntry>> REQUIRED_COLUMNS = List.of(
             new SimpleColumnPattern<>("stringColumn", ColumnParser.STRING_COLUMN_PARSER,
-                    TestTableEntry::setAString, Optional.empty(), true, false),
+                    TestTableEntry::setAString, TestTableEntry::getAString, Optional.empty(), true, false),
             new SimpleColumnPattern<>("booleanColumn", ColumnParser.BOOLEAN_COLUMN_PARSER,
-                    TestTableEntry::setABoolean),
+                    TestTableEntry::setABoolean, TestTableEntry::getABoolean),
             new SimpleColumnPattern<>("doubleColumn", ColumnParser.DOUBLE_COLUMN_PARSER,
-                    TestTableEntry::setADouble),
+                    TestTableEntry::setADouble, TestTableEntry::getADouble),
             new SimpleColumnPattern<>("integerColumn", ColumnParser.INTEGER_COLUMN_PARSER,
-                    TestTableEntry::setAnInt),
+                    TestTableEntry::setAnInt, TestTableEntry::getAnInt),
             new SimpleColumnPattern<>("localDateColumn", ColumnParser.LOCALDATE_COLUMN_PARSER,
-                    TestTableEntry::setALocalDate)
+                    TestTableEntry::setALocalDate, TestTableEntry::getALocalDate)
     );
     private static final TableScheme<List<TestTableEntry>, TestTableEntry> TEST_TABLE_SCHEME
             = new TableScheme<>(
@@ -76,10 +75,11 @@ public class SupportedDatabasesTest {
             REQUIRED_COLUMNS,
             List.of(
                     new SimpleColumnPattern<>("optionalColumn", ColumnParser.INTEGER_COLUMN_PARSER,
-                            TestTableEntry::setAnOptionalInteger),
+                            TestTableEntry::setAnOptionalInteger, TestTableEntry::getAnOptionalInteger),
                     new RegexColumnPattern<>("^regexColumn\\d+$", ColumnParser.STRING_COLUMN_PARSER,
                             TestTableEntry::setAssociatedValue,
-                            columnName -> Integer.parseInt(columnName.substring("regexColumn".length())))
+                            columnName -> Integer.parseInt(columnName.substring("regexColumn".length())),
+                            TestTableEntry::getAssociatedValue)
             ),
             TestTableEntry::new,
             e -> e.collect(Collectors.toList())
@@ -114,7 +114,7 @@ public class SupportedDatabasesTest {
      */
     @ParameterizedTest(name = "Check existence of databases")
     @MethodSource("provideConnections")
-    void checkExistenceOfTestDatabase(@NotNull DBConnection connection){
+    void checkExistenceOfTestDatabase(@NotNull DBConnection connection) {
         assertTrue(assertDoesNotThrow(connection::databaseExists));
     }
 
@@ -141,14 +141,16 @@ public class SupportedDatabasesTest {
         Set<Table<?, ?>> tables = assumeDoesNotThrow(connection::getAllTables, "Could not request existing tables");
         assumeTrue(
                 tables.stream()
-                        .noneMatch(t -> t.getTableName().equals(TEST_TABLE_SCHEME.getTableName())),
+                        .noneMatch(t -> t.getTableScheme().getTableName()
+                                .equalsIgnoreCase(TEST_TABLE_SCHEME.getTableName())),
                 "The database already contains a table which has the name of the test table to be created"
         );
         assertDoesNotThrow(() -> connection.createTableIfNotExists(TEST_TABLE_SCHEME), "Could not create table");
         tables = assumeDoesNotThrow(connection::getAllTables, "Could not request existing tables");
         assertTrue(
                 tables.stream()
-                        .anyMatch(t -> t.getTableName().equalsIgnoreCase(TEST_TABLE_SCHEME.getTableName())),
+                        .anyMatch(t -> t.getTableScheme().getTableName()
+                                .equalsIgnoreCase(TEST_TABLE_SCHEME.getTableName())),
                 "The test table was not created"
         );
 
@@ -198,17 +200,25 @@ public class SupportedDatabasesTest {
     }
 
     private static class TestTableEntry {
-        public String aString = null;
-        public Boolean aBoolean = null;
-        public Double aDouble = null;
-        public Integer anInt = null;
-        public LocalDate aLocalDate = null;
-        public Integer anOptionalInteger = null;
-        public final Map<Integer, String> associatedValues = new HashMap<>();
+        private String aString = null;
+        private Boolean aBoolean = null;
+        private Double aDouble = null;
+        private Integer anInt = null;
+        private LocalDate aLocalDate = null;
+        private Integer anOptionalInteger = null;
+        private final Map<Integer, String> associatedValues = new HashMap<>();
+
+        public String getAString() {
+            return aString;
+        }
 
         public TestTableEntry setAString(String aString) {
             this.aString = aString;
             return this;
+        }
+
+        public Boolean getABoolean() {
+            return aBoolean;
         }
 
         public TestTableEntry setABoolean(boolean aBoolean) {
@@ -216,9 +226,17 @@ public class SupportedDatabasesTest {
             return this;
         }
 
+        public Double getADouble() {
+            return aDouble;
+        }
+
         public TestTableEntry setADouble(double aDouble) {
             this.aDouble = aDouble;
             return this;
+        }
+
+        public Integer getAnInt() {
+            return anInt;
         }
 
         public TestTableEntry setAnInt(int anInt) {
@@ -226,14 +244,26 @@ public class SupportedDatabasesTest {
             return this;
         }
 
+        public LocalDate getALocalDate() {
+            return aLocalDate;
+        }
+
         public TestTableEntry setALocalDate(LocalDate aLocalDate) {
             this.aLocalDate = aLocalDate;
             return this;
         }
 
+        public Integer getAnOptionalInteger() {
+            return anOptionalInteger;
+        }
+
         public TestTableEntry setAnOptionalInteger(Integer anOptionalInteger) {
             this.anOptionalInteger = anOptionalInteger;
             return this;
+        }
+
+        public String getAssociatedValue(Integer key) {
+            return associatedValues.get(key);
         }
 
         public TestTableEntry setAssociatedValue(Integer key, String value) {
