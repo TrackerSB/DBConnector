@@ -71,9 +71,6 @@ public class SimpleColumnPattern<T, U> extends ColumnPattern<T, U> {
         this.allowNull = allowNull;
     }
 
-    /**
-     * @since 0.1
-     */
     @Override
     @NotNull
     protected U combineImpl(@NotNull U toSet, @NotNull String columnName, @Nullable T value) {
@@ -84,7 +81,6 @@ public class SimpleColumnPattern<T, U> extends ColumnPattern<T, U> {
      * Returns the real column name of this column.
      *
      * @return The real column name of this column.
-     * @since 0.1
      */
     @NotNull
     public String getRealColumnName() {
@@ -95,7 +91,6 @@ public class SimpleColumnPattern<T, U> extends ColumnPattern<T, U> {
      * Checks whether a default value is set for this column
      *
      * @return {@code true} only if a default value is associated with this column.
-     * @since 0.1
      */
     public boolean hasDefaultValue() {
         return getDefaultValue().isPresent();
@@ -105,7 +100,6 @@ public class SimpleColumnPattern<T, U> extends ColumnPattern<T, U> {
      * Returns the default value to set when creating a table containing this column.
      *
      * @return The default value to set when creating a table containing this column. See description of constructors.
-     * @since 0.1
      */
     @NotNull
     public Optional<Optional<T>> getDefaultValue() {
