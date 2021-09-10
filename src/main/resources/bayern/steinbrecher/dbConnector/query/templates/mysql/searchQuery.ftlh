@@ -5,5 +5,5 @@
 <#-- @ftlvariable name="table" type="bayern.steinbrecher.dbConnector.DBConnection.Table" -->
 
 SELECT <#list columnsToSelect as column>${quoteIdentifier(column.name)}<#sep>, </#sep><#else>*</#list>
-FROM ${quoteIdentifier(dbName)}.${quoteIdentifier(table.tableName)}
+FROM ${quoteIdentifier(dbName)}.${quoteIdentifier(table.tableScheme.tableName)}
 <#list conditions>WHERE <#items as condition>${condition.sqlExpression}<#sep> AND </#sep></#items></#list>;
