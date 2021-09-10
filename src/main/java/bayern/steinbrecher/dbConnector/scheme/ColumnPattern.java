@@ -24,7 +24,6 @@ public abstract class ColumnPattern<T, U> {
     /**
      * @param columnNamePattern The RegEx column names have to match.
      * @param parser            The parser for converting values from and to their SQL representation.
-     * @since 0.1
      */
     protected ColumnPattern(@NotNull String columnNamePattern, @NotNull ColumnParser<T> parser) {
         Objects.requireNonNull(columnNamePattern, "The pattern for the column name is required");
@@ -37,26 +36,17 @@ public abstract class ColumnPattern<T, U> {
         this.parser = parser;
     }
 
-    /**
-     * @since 0.1
-     */
     @NotNull
     public Pattern getColumnNamePattern() {
         return columnNamePattern;
     }
 
-    /**
-     * @since 0.1
-     */
     public boolean matches(@NotNull String columnName) {
         return getColumnNamePattern()
                 .matcher(Objects.requireNonNull(columnName))
                 .matches();
     }
 
-    /**
-     * @since 0.1
-     */
     @NotNull
     public ColumnParser<T> getParser() {
         return parser;
@@ -69,7 +59,6 @@ public abstract class ColumnPattern<T, U> {
      * @param columnName The column name matching this pattern to extract the key from.
      * @param value      The value to parse and to set.
      * @return The resulting object of type {@link U}.
-     * @since 0.1
      */
     public final U combine(@NotNull U toSet, @NotNull String columnName, @Nullable String value) {
         if (getColumnNamePattern().matcher(columnName).matches()) {
@@ -97,7 +86,6 @@ public abstract class ColumnPattern<T, U> {
 
     /**
      * @see #combine(Object, String, String)
-     * @since 0.1
      */
     protected abstract U combineImpl(@NotNull U toSet, @NotNull String columnName, @Nullable T parsedValue);
 
@@ -107,7 +95,6 @@ public abstract class ColumnPattern<T, U> {
      *
      * @param obj The object to compare this column pattern with.
      * @return {@code true} only if this pattern reflects the same column names as the given object.
-     * @since 0.1
      */
     @Override
     public boolean equals(@Nullable Object obj) {
@@ -120,9 +107,6 @@ public abstract class ColumnPattern<T, U> {
         return isEqual;
     }
 
-    /**
-     * @since 0.1
-     */
     @Override
     public int hashCode() {
         //CHECKSTYLE.OFF: MagicNumber - This is the default implementation of NetBeans.
@@ -132,9 +116,6 @@ public abstract class ColumnPattern<T, U> {
         return hash;
     }
 
-    /**
-     * @since 0.1
-     */
     @Override
     @NotNull
     public String toString() {
