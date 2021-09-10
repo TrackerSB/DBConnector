@@ -101,7 +101,7 @@ public abstract /* final */ class ColumnParser<T> {
         @Nullable
         public LocalDate parse(@Nullable String value) throws ParseException {
             LocalDate date = null;
-            if(value != null) {
+            if (value != null) {
                 try {
                     date = LocalDate.parse(value);
                 } catch (DateTimeParseException ex) {
