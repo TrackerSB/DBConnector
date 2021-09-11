@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -241,10 +242,10 @@ public abstract class DBConnection implements AutoCloseable {
 
         @NotNull
         private <C> Optional<ColumnPattern<C, E>> findColumnPattern(
-                @NotNull Class<C> columnType, @NotNull String columnName){
+                @NotNull Class<C> columnType, @NotNull String columnName) {
             return Stream.concat(
-                    getTableScheme().getRequiredColumns().stream(),
-                    getTableScheme().getOptionalColumns().stream())
+                            getTableScheme().getRequiredColumns().stream(),
+                            getTableScheme().getOptionalColumns().stream())
                     .filter(cp -> cp.matches(columnName))
                     .map(cp -> (ColumnPattern<C, E>) cp)
                     .findAny();
@@ -294,12 +295,15 @@ public abstract class DBConnection implements AutoCloseable {
         @NotNull
         public TableView<E> createTableView() throws QueryFailedException {
             TableView<E> tableView = new TableView<>();
-            for (Column<E, ?> column : getColumns()) {
-                TableColumn<E, ?> tableViewColumn = column.createTableViewColumn();
-                tableViewColumn.setText(column.getName());
-                tableView.getColumns()
-                        .add(tableViewColumn);
-            }
+            getColumns()
+                    .stream()
+                    .sorted(Comparator.comparingInt(Column::getIndex))
+                    .forEachOrdered(c -> {
+                        TableColumn<E, ?> tableViewColumn = c.createTableViewColumn();
+                        tableViewColumn.setText(c.getName());
+                        tableView.getColumns()
+                                .add(tableViewColumn);
+                    });
             return tableView;
         }
 
