@@ -19,9 +19,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -290,16 +292,17 @@ public abstract class DBConnection implements AutoCloseable {
         /**
          * Return an empty {@link TableView} showing all columns this {@link Table} has.
          *
+         * @param patternFallbacks Functions for columns (no associated pattern) that provide values for them.
          * @since 0.16
          */
         @NotNull
-        public TableView<E> createTableView() throws QueryFailedException {
+        public TableView<E> createTableView(@Nullable Map<String, Function<E, ?>> patternFallbacks) throws QueryFailedException {
             TableView<E> tableView = new TableView<>();
             getColumns()
                     .stream()
                     .sorted(Comparator.comparingInt(Column::getIndex))
                     .forEachOrdered(c -> {
-                        TableColumn<E, ?> tableViewColumn = c.createTableViewColumn();
+                        TableColumn<E, ?> tableViewColumn = c.createTableViewColumn(patternFallbacks);
                         tableViewColumn.setText(c.getName());
                         tableView.getColumns()
                                 .add(tableViewColumn);
@@ -407,12 +410,16 @@ public abstract class DBConnection implements AutoCloseable {
          * Return a column which can be used for a {@link javafx.scene.control.TableView} that extracts a certain value of
          * items of the given type and parses it with this {@link ColumnParser}.
          *
+         * @param patternFallbacks Functions for columns (no associated pattern) that provide values for them.
          * @return A {@link TableColumn} with a cell value factory but no name.
          * @since 0.16
          */
         @NotNull
-        public TableColumn<E, C> createTableViewColumn() {
+        public TableColumn<E, C> createTableViewColumn(@Nullable Map<String, Function<E, ?>> patternFallbacks) {
+            // Do not warn for each column that has no predefined pattern or fallback over and over again
+            Set<String> fallbacklessColumns = new HashSet<>();
             Set<String> patternlessColumns = new HashSet<>();
+
             TableColumn<E, C> column = new TableColumn<>();
             column.setCellValueFactory(features -> new ObservableValueBase<>() {
                 @Override
@@ -420,12 +427,21 @@ public abstract class DBConnection implements AutoCloseable {
                     C value;
                     if (pattern == null) {
                         String columnName = features.getTableColumn().getText();
-                        // Do not warn for each column that has no predefined pattern over and over again
                         if (!patternlessColumns.contains(columnName)) {
-                            LOGGER.log(Level.WARNING, String.format("No pattern provided for %s", columnName));
+                            LOGGER.log(Level.INFO, String.format("There's no pattern for %s.", columnName));
                             patternlessColumns.add(columnName);
                         }
-                        value = null;
+
+                        if (patternFallbacks != null && patternFallbacks.containsKey(columnName)) {
+                            value = (C) patternFallbacks.get(columnName).apply(features.getValue());
+                        } else {
+                            if (!fallbacklessColumns.contains(columnName)) {
+                                LOGGER.log(Level.WARNING, String.format(
+                                        "There's no fallback provided for %s. The column will be empty", columnName));
+                                fallbacklessColumns.add(columnName);
+                            }
+                            value = null;
+                        }
                     } else {
                         value = pattern.getValue(features.getValue(), getName());
                     }
