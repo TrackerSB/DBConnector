@@ -412,14 +412,19 @@ public abstract class DBConnection implements AutoCloseable {
          */
         @NotNull
         public TableColumn<E, C> createTableViewColumn() {
+            Set<String> patternlessColumns = new HashSet<>();
             TableColumn<E, C> column = new TableColumn<>();
             column.setCellValueFactory(features -> new ObservableValueBase<>() {
                 @Override
                 public C getValue() {
                     C value;
                     if (pattern == null) {
-                        LOGGER.log(Level.WARNING,
-                                String.format("No pattern provided for %s", features.getTableColumn().getText()));
+                        String columnName = features.getTableColumn().getText();
+                        // Do not warn for each column that has no predefined pattern over and over again
+                        if (!patternlessColumns.contains(columnName)) {
+                            LOGGER.log(Level.WARNING, String.format("No pattern provided for %s", columnName));
+                            patternlessColumns.add(columnName);
+                        }
                         value = null;
                     } else {
                         value = pattern.getValue(features.getValue(), getName());
