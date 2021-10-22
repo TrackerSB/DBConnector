@@ -112,11 +112,11 @@ public abstract class QueryOperator<T> {
         this.operatorSymbol = Objects.requireNonNull(operatorSymbol);
     }
 
-    protected ArgumentConverter<T> getArgumentConverter() {
+    public ArgumentConverter<T> getArgumentConverter() {
         return argumentConverter;
     }
 
-    protected String getOperatorSymbol() {
+    public String getOperatorSymbol() {
         return operatorSymbol;
     }
 
