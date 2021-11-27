@@ -201,7 +201,7 @@ public abstract class QueryOperator<T> {
         }
     }
 
-    private static class BinaryQueryOperator<T> extends QueryOperator<T> {
+    public static class BinaryQueryOperator<T> extends QueryOperator<T> {
         protected BinaryQueryOperator(
                 @NotNull ArgumentConverter<T> argumentConverter, @NotNull String operator) {
             super(argumentConverter, operator);
@@ -224,7 +224,7 @@ public abstract class QueryOperator<T> {
         }
     }
 
-    private static class PrefixQueryOperator<T> extends QueryOperator<T> {
+    public static class PrefixQueryOperator<T> extends QueryOperator<T> {
 
         protected PrefixQueryOperator(@NotNull ArgumentConverter<T> argumentConverter, @NotNull String operator) {
             super(argumentConverter, operator);
