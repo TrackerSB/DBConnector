@@ -377,6 +377,13 @@ public abstract class DBConnection implements AutoCloseable {
         }
 
         /**
+         * @since 0.16
+         */
+        public Optional<ColumnPattern<C, E>> getPattern() {
+            return Optional.ofNullable(pattern);
+        }
+
+        /**
          * Required for referencing the generic type of {@link Column} during runtime.
          */
         @NotNull
