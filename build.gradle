@@ -23,8 +23,8 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testImplementation 'org.junit.jupiter:junit-jupiter-params:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
-    testImplementation 'org.craftercms.mariaDB4j:mariaDB4j:2.4.9E'
-    testRuntimeOnly 'org.craftercms.mariaDB4j:mariaDB4j:2.4.9E'
+    testImplementation 'org.craftercms.mariaDB4j:mariaDB4j:2.4.10'
+    testRuntimeOnly 'org.craftercms.mariaDB4j:mariaDB4j:2.4.10'
     testImplementation "org.craftercms.mariaDB4j:mariaDB4j-db-win64:10.4.6.2"
 }
 
