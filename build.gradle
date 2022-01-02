@@ -78,7 +78,7 @@ publishing {
             pom {
                 name = 'DBConnector'
                 description = 'A library which aims to simplify database connections especially if they are over SSH'
-                url = 'https://steinbrecher.bayern'
+                url = 'https://steinbrecher-bayern.de'
                 licenses {
                     license {
                         name = 'The Beer-Ware License (Revision 42)'
