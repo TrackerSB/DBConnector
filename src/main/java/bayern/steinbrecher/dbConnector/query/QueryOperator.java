@@ -54,9 +54,9 @@ public abstract class QueryOperator<T> {
     );
 
     // FIXME The separation of integer and double prohibits comparison of integer and double columns
-    public static final QueryOperator<Integer> IS_SMALLER_I
+    public static final QueryOperator<Integer> IS_LESS_I
             = new BinaryQueryOperator<>(ArgumentConverter.INTEGER_ARGUMENT_CONVERTER, "<");
-    public static final QueryOperator<Integer> IS_SMALLER_EQUAL_I
+    public static final QueryOperator<Integer> IS_LESS_EQUAL_I
             = new BinaryQueryOperator<>(ArgumentConverter.INTEGER_ARGUMENT_CONVERTER, "<=");
     public static final QueryOperator<Integer> IS_EQUAL_I
             = new BinaryQueryOperator<>(ArgumentConverter.INTEGER_ARGUMENT_CONVERTER, "=");
@@ -65,12 +65,12 @@ public abstract class QueryOperator<T> {
     public static final QueryOperator<Integer> IS_GREATER_I
             = new BinaryQueryOperator<>(ArgumentConverter.INTEGER_ARGUMENT_CONVERTER, ">");
     public static final Set<QueryOperator<Integer>> INTEGER_OPERATORS = Set.of(
-            IS_SMALLER_I, IS_SMALLER_EQUAL_I, IS_EQUAL_I, IS_GREATER_EQUAL_I, IS_GREATER_I
+            IS_LESS_I, IS_LESS_EQUAL_I, IS_EQUAL_I, IS_GREATER_EQUAL_I, IS_GREATER_I
     );
 
-    public static final QueryOperator<Double> IS_SMALLER_D
+    public static final QueryOperator<Double> IS_LESS_D
             = new BinaryQueryOperator<>(ArgumentConverter.DOUBLE_ARGUMENT_CONVERTER, "<");
-    public static final QueryOperator<Double> IS_SMALLER_EQUAL_D
+    public static final QueryOperator<Double> IS_LESS_EQUAL_D
             = new BinaryQueryOperator<>(ArgumentConverter.DOUBLE_ARGUMENT_CONVERTER, "<=");
     public static final QueryOperator<Double> IS_EQUAL_D
             = new BinaryQueryOperator<>(ArgumentConverter.DOUBLE_ARGUMENT_CONVERTER, "=");
@@ -79,7 +79,7 @@ public abstract class QueryOperator<T> {
     public static final QueryOperator<Double> IS_GREATER_D
             = new BinaryQueryOperator<>(ArgumentConverter.DOUBLE_ARGUMENT_CONVERTER, ">");
     public static final Set<QueryOperator<Double>> DOUBLE_OPERATORS = Set.of(
-            IS_SMALLER_D, IS_SMALLER_EQUAL_D, IS_EQUAL_D, IS_GREATER_EQUAL_D, IS_GREATER_D
+            IS_LESS_D, IS_LESS_EQUAL_D, IS_EQUAL_D, IS_GREATER_EQUAL_D, IS_GREATER_D
     );
 
     /**
