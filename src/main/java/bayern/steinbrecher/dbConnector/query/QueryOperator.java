@@ -124,24 +124,18 @@ public abstract class QueryOperator<T> {
     public abstract QueryCondition<T> generateCondition(
             @NotNull QueryGenerator queryGenerator, @NotNull Object... arguments);
 
-    /* FIXME Should "equals" also consider the generic type since "smaller than" is different for integer, double or
-     * local date?
-     */
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         QueryOperator<?> that = (QueryOperator<?>) o;
-        return getOperatorSymbol().equals(that.getOperatorSymbol());
+        return getArgumentConverter().equals(that.getArgumentConverter())
+                && getOperatorSymbol().equals(that.getOperatorSymbol());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getOperatorSymbol());
+        return Objects.hash(getArgumentConverter(), getOperatorSymbol());
     }
 
     public static final class ArgumentConverter<T> {
