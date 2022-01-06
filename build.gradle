@@ -40,7 +40,7 @@ java {
     withJavadocJar()
 }
 
-sourceCompatibility = 16
+sourceCompatibility = 17
 targetCompatibility = "$sourceCompatibility" as Integer
 
 javafx {
