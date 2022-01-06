@@ -268,7 +268,7 @@ public abstract class DBConnection implements AutoCloseable {
                         Optional<Class<C>> columnType = queryGenerator.getType(columnTypeName);
                         if (columnType.isPresent()) {
                             int ordinalPosition = Integer.parseInt(row.get(3));
-                            boolean nullable = Boolean.parseBoolean(row.get(2));
+                            boolean nullable = row.get(2).equalsIgnoreCase("YES");
                             // FIXME Associate column patterns where available
                             cachedColumns.add(new Column<E, C>(columnName, columnType.get(), ordinalPosition, nullable,
                                     findColumnPattern(columnType.get(), columnName)));
