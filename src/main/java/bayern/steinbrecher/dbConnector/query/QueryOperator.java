@@ -167,7 +167,7 @@ public abstract class QueryOperator<T> {
             String convertedArgument;
             if (runtimeGenericColumnTypeProvider.isAssignableFrom(argument.getClass())) {
                 convertedArgument = queryGenerator.quoteIdentifier(
-                        runtimeGenericColumnTypeProvider.cast(argument).getName());
+                        runtimeGenericColumnTypeProvider.cast(argument).name());
             } else {
                 convertedArgument = null;
             }

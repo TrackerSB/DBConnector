@@ -12,7 +12,6 @@ import javafx.beans.value.ObservableValueBase;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
@@ -147,7 +146,7 @@ public abstract class DBConnection implements AutoCloseable {
         Set<Column<E, ?>> cachedColumns = getAllColumns(scheme);
         return scheme.getRequiredColumns()
                 .stream()
-                .filter(scp -> cachedColumns.stream().noneMatch(column -> scp.matches(column.getName())))
+                .filter(scp -> cachedColumns.stream().noneMatch(column -> scp.matches(column.name())))
                 .collect(Collectors.toSet());
     }
 
@@ -271,7 +270,7 @@ public abstract class DBConnection implements AutoCloseable {
                         if (columnType.isPresent()) {
                             // FIXME Associate column patterns where available
                             cachedColumns.add(new Column<E, C>(columnName, columnType.get(), numAddedColumns,
-                                    findColumnPattern(columnType.get(), columnName).orElse(null)));
+                                    findColumnPattern(columnType.get(), columnName)));
                             numAddedColumns++;
                         } else {
                             LOGGER.log(Level.INFO, String.format(
@@ -298,10 +297,10 @@ public abstract class DBConnection implements AutoCloseable {
             TableView<E> tableView = new TableView<>();
             getColumns()
                     .stream()
-                    .sorted(Comparator.comparingInt(Column::getIndex))
+                    .sorted(Comparator.comparingInt(Column::index))
                     .forEachOrdered(c -> {
                         TableColumn<E, ?> tableViewColumn = c.createTableViewColumn();
-                        tableViewColumn.setText(c.getName());
+                        tableViewColumn.setText(c.name());
                         tableView.getColumns()
                                 .add(tableViewColumn);
                     });
@@ -336,12 +335,7 @@ public abstract class DBConnection implements AutoCloseable {
      * @since 0.1
      */
     // FIXME Unify the order of generic template parameters (TableColumn/Column vs ColumnPattern)
-    public static class Column<E, C> {
-
-        private final String name;
-        private final Class<C> columnType;
-        private final int index;
-        private final ColumnPattern<C, E> pattern;
+    public record Column<E, C>(String name, Class<C> columnType, int index, Optional<ColumnPattern<C, E>> pattern) {
 
         /**
          * @param columnType The class of Java objects this column represents. Since this class represents existing
@@ -351,36 +345,10 @@ public abstract class DBConnection implements AutoCloseable {
          * @since 0.16
          */
         // NOTE Only the class Table should be allowed to create Column objects
-        private Column(@NotNull String name, @NotNull Class<C> columnType, int index,
-                       @Nullable ColumnPattern<C, E> pattern) {
+        public Column {
             if (index < 0) {
                 throw new IllegalArgumentException("The index must be not be negative");
             }
-            this.name = Objects.requireNonNull(name);
-            this.columnType = Objects.requireNonNull(columnType);
-            this.index = index;
-            this.pattern = pattern;
-        }
-
-        @NotNull
-        public String getName() {
-            return name;
-        }
-
-        @NotNull
-        public Class<C> getColumnType() {
-            return columnType;
-        }
-
-        public int getIndex() {
-            return index;
-        }
-
-        /**
-         * @since 0.16
-         */
-        public Optional<ColumnPattern<C, E>> getPattern() {
-            return Optional.ofNullable(pattern);
         }
 
         /**
@@ -403,16 +371,16 @@ public abstract class DBConnection implements AutoCloseable {
                 return false;
             }
             Column<?, ?> column = (Column<?, ?>) o;
-            return getName().equals(column.getName());
+            return name().equals(column.name());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(getName());
+            return Objects.hash(name());
         }
 
         /**
-         * Return a column which can be used for a {@link javafx.scene.control.TableView} that extracts a certain value of
+         * Return a column which can be used for a {@link TableView} that extracts a certain value of
          * items of the given type and parses it with this {@link ColumnParser}.
          *
          * @return A {@link TableColumn} with a cell value factory but no name.
@@ -427,7 +395,9 @@ public abstract class DBConnection implements AutoCloseable {
                 @Override
                 public C getValue() {
                     C value;
-                    if (pattern == null) {
+                    if (pattern.isPresent()) {
+                        value = pattern.get().getValue(features.getValue(), name());
+                    } else {
                         String columnName = features.getTableColumn().getText();
                         if (!warnedAboutPatternlessColumn.get()) {
                             LOGGER.log(Level.WARNING, String.format(
@@ -435,8 +405,6 @@ public abstract class DBConnection implements AutoCloseable {
                             warnedAboutPatternlessColumn.set(true);
                         }
                         value = null;
-                    } else {
-                        value = pattern.getValue(features.getValue(), getName());
                     }
                     return value;
                 }
