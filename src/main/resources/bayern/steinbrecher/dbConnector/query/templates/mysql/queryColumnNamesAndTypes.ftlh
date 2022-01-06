@@ -2,7 +2,7 @@
 <#-- @ftlvariable name="dbName" type="java.lang.String" -->
 <#-- @ftlvariable name="table" type="bayern.steinbrecher.dbConnector.DBConnection.Table" -->
 
-SELECT ${quoteIdentifier("COLUMN_NAME")}, ${quoteIdentifier("DATA_TYPE")}, ${quoteIdentifier("IS_NULLABLE")}
+SELECT ${quoteIdentifier("COLUMN_NAME")}, ${quoteIdentifier("DATA_TYPE")}, ${quoteIdentifier("IS_NULLABLE")}, ${quoteIdentifier("ORDINAL_POSITION")}
 FROM ${quoteIdentifier("INFORMATION_SCHEMA.COLUMNS")}
 WHERE ${quoteIdentifier("TABLE_SCHEMA")} = '${dbName}'
     AND ${quoteIdentifier("TABLE_NAME")} = '${table.tableScheme.tableName}';

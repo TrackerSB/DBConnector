@@ -262,17 +262,16 @@ public abstract class DBConnection implements AutoCloseable {
                             getDatabaseName(), this);
                     List<List<String>> result = execQuery(query);
                     result.remove(0); // Skip headings
-                    int numAddedColumns = 0;
                     for (List<String> row : result) {
                         String columnName = row.get(0);
                         String columnTypeName = row.get(1);
                         Optional<Class<C>> columnType = queryGenerator.getType(columnTypeName);
                         if (columnType.isPresent()) {
+                            int ordinalPosition = Integer.parseInt(row.get(3));
                             boolean nullable = Boolean.parseBoolean(row.get(2));
                             // FIXME Associate column patterns where available
-                            cachedColumns.add(new Column<E, C>(columnName, columnType.get(), numAddedColumns, nullable,
+                            cachedColumns.add(new Column<E, C>(columnName, columnType.get(), ordinalPosition, nullable,
                                     findColumnPattern(columnType.get(), columnName)));
-                            numAddedColumns++;
                         } else {
                             LOGGER.log(Level.INFO, String.format(
                                     "Skip column '%s' of table '%s' since it has an unsupported SQL type ('%s')",
