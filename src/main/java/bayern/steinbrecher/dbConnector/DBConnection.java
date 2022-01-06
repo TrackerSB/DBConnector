@@ -268,8 +268,9 @@ public abstract class DBConnection implements AutoCloseable {
                         String columnTypeName = row.get(1);
                         Optional<Class<C>> columnType = queryGenerator.getType(columnTypeName);
                         if (columnType.isPresent()) {
+                            boolean nullable = Boolean.parseBoolean(row.get(2));
                             // FIXME Associate column patterns where available
-                            cachedColumns.add(new Column<E, C>(columnName, columnType.get(), numAddedColumns,
+                            cachedColumns.add(new Column<E, C>(columnName, columnType.get(), numAddedColumns, nullable,
                                     findColumnPattern(columnType.get(), columnName)));
                             numAddedColumns++;
                         } else {
@@ -335,7 +336,12 @@ public abstract class DBConnection implements AutoCloseable {
      * @since 0.1
      */
     // FIXME Unify the order of generic template parameters (TableColumn/Column vs ColumnPattern)
-    public record Column<E, C>(String name, Class<C> columnType, int index, Optional<ColumnPattern<C, E>> pattern) {
+    public record Column<E, C>(
+            String name,
+            Class<C> columnType,
+            int index,
+            boolean nullable,
+            Optional<ColumnPattern<C, E>> pattern) {
 
         /**
          * @param columnType The class of Java objects this column represents. Since this class represents existing
@@ -358,8 +364,8 @@ public abstract class DBConnection implements AutoCloseable {
         @SuppressWarnings("unchecked")
         public static <C> Class<Column<?, C>> getTypeDummy(Class<C> runtimeGenericTypeProvider) {
             //noinspection InstantiatingObjectToGetClassObject
-            return (Class<Column<?, C>>) new Column<>("nonExistingColumnName", runtimeGenericTypeProvider, 0, null)
-                    .getClass();
+            return (Class<Column<?, C>>)
+                    new Column<>("nonExistingColumnName", runtimeGenericTypeProvider, 0, false, null).getClass();
         }
 
         @Override
