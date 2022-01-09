@@ -14,7 +14,6 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
-import javafx.util.StringConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -396,32 +395,27 @@ public abstract class DBConnection implements AutoCloseable {
          * @since 0.16
          */
         @NotNull
-        public TableColumn<E, ObservableValue<C>> createTableViewColumn() {
+        public TableColumn<E, C> createTableViewColumn() {
             AtomicBoolean warnedAboutPatternlessColumn = new AtomicBoolean(false);
 
-            TableColumn<E, ObservableValue<C>> column = new TableColumn<>();
-            column.setCellValueFactory(features -> new ObservableValueBase<>() {
-                @Override
-                public ObservableValue<C> getValue() {
-                    ObservableValue<C> value;
-                    if (pattern().isPresent()) {
-                        value = new ObservableValueBase<>() {
-                            @Override
-                            public C getValue() {
-                                return pattern().get().getValue(features.getValue(), name());
-                            }
-                        };
-                    } else {
-                        String columnName = features.getTableColumn().getText();
-                        if (!warnedAboutPatternlessColumn.get()) {
-                            LOGGER.log(Level.WARNING, String.format(
-                                    "There's no pattern for %s. The column will be empty.", columnName));
-                            warnedAboutPatternlessColumn.set(true);
+            TableColumn<E, C> column = new TableColumn<>();
+            column.setCellValueFactory(features -> {
+                if (pattern().isPresent()) {
+                    return new ObservableValueBase<>() {
+                        @Override
+                        public C getValue() {
+                            return pattern().get().getValue(features.getValue(), name());
                         }
-                        value = null;
-                    }
-                    return value;
+                    };
                 }
+
+                String columnName = features.getTableColumn().getText();
+                if (!warnedAboutPatternlessColumn.get()) {
+                    LOGGER.log(Level.WARNING, String.format(
+                            "There's no pattern for %s. The column will be empty.", columnName));
+                    warnedAboutPatternlessColumn.set(true);
+                }
+                return null;
             });
             column.setCellFactory(c -> {
                 if (pattern().isPresent()) {
@@ -434,18 +428,7 @@ public abstract class DBConnection implements AutoCloseable {
 
                 // Either the type of the column is not supported or it is not part of the scheme
                 c.setEditable(false);
-                return new TextFieldTableCell<>(new StringConverter<>() {
-                    @Override
-                    public String toString(ObservableValue<C> object) {
-                        return object.getValue().toString();
-                    }
-
-                    @Override
-                    public ObservableValue<C> fromString(String string) {
-                        // FIXME Editing not supported
-                        return null;
-                    }
-                });
+                return new TextFieldTableCell<>();
             });
             return column;
         }
