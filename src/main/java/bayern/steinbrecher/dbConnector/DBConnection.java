@@ -11,6 +11,8 @@ import bayern.steinbrecher.dbConnector.scheme.TableScheme;
 import javafx.beans.value.ObservableValueBase;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.cell.CheckBoxTableCell;
+import javafx.scene.control.cell.TextFieldTableCell;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -400,8 +402,8 @@ public abstract class DBConnection implements AutoCloseable {
                 @Override
                 public C getValue() {
                     C value;
-                    if (pattern.isPresent()) {
-                        value = pattern.get().getValue(features.getValue(), name());
+                    if (pattern().isPresent()) {
+                        value = pattern().get().getValue(features.getValue(), name());
                     } else {
                         String columnName = features.getTableColumn().getText();
                         if (!warnedAboutPatternlessColumn.get()) {
@@ -414,7 +416,23 @@ public abstract class DBConnection implements AutoCloseable {
                     return value;
                 }
             });
-            column.setEditable(false);
+            column.setCellFactory(c -> {
+                if (pattern().isPresent()) {
+                    c.setEditable(true);
+                    if (Boolean.class.isAssignableFrom(columnType())) {
+                        return new CheckBoxTableCell<>(index -> new ObservableValueBase<>() {
+                            @Override
+                            public Boolean getValue() {
+                                return (Boolean) c.getCellObservableValue(index).getValue();
+                            }
+                        });
+                    }
+                }
+
+                // Either the type of the column is not supported or it is not part of the scheme
+                c.setEditable(false);
+                return new TextFieldTableCell<>();
+            });
             return column;
         }
     }
