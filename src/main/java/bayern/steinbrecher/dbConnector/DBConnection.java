@@ -14,6 +14,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.util.StringConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -433,7 +434,18 @@ public abstract class DBConnection implements AutoCloseable {
 
                 // Either the type of the column is not supported or it is not part of the scheme
                 c.setEditable(false);
-                return new TextFieldTableCell<>();
+                return new TextFieldTableCell<>(new StringConverter<>() {
+                    @Override
+                    public String toString(ObservableValue<C> object) {
+                        return object.getValue().toString();
+                    }
+
+                    @Override
+                    public ObservableValue<C> fromString(String string) {
+                        // FIXME Editing not supported
+                        return null;
+                    }
+                });
             });
             return column;
         }
