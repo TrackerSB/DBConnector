@@ -422,7 +422,7 @@ public abstract class DBConnection implements AutoCloseable {
                     c.setEditable(true);
                     if (Boolean.class.isAssignableFrom(columnType())) {
                         return new CheckBoxTableCell<>(
-                                index -> (ObservableValue<Boolean>) c.getCellObservableValue(index).getValue());
+                                index -> (ObservableValue<Boolean>) c.getCellObservableValue(index));
                     }
                 }
 
