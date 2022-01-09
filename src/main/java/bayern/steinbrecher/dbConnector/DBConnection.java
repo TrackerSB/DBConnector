@@ -4,28 +4,18 @@ import bayern.steinbrecher.dbConnector.query.GenerationFailedException;
 import bayern.steinbrecher.dbConnector.query.QueryFailedException;
 import bayern.steinbrecher.dbConnector.query.QueryGenerator;
 import bayern.steinbrecher.dbConnector.query.SupportedDBMS;
-import bayern.steinbrecher.dbConnector.scheme.ColumnParser;
 import bayern.steinbrecher.dbConnector.scheme.ColumnPattern;
 import bayern.steinbrecher.dbConnector.scheme.SimpleColumnPattern;
 import bayern.steinbrecher.dbConnector.scheme.TableScheme;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ObservableValue;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.cell.CheckBoxTableCell;
-import javafx.scene.control.cell.TextFieldTableCell;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -291,26 +281,6 @@ public abstract class DBConnection implements AutoCloseable {
             return Collections.unmodifiableSet(cachedColumns);
         }
 
-        /**
-         * Return an empty {@link TableView} showing all columns this {@link Table} has.
-         *
-         * @since 0.16
-         */
-        @NotNull
-        public TableView<E> createTableView() throws QueryFailedException {
-            TableView<E> tableView = new TableView<>();
-            getColumns()
-                    .stream()
-                    .sorted(Comparator.comparingInt(Column::index))
-                    .forEachOrdered(c -> {
-                        TableColumn<E, ?> tableViewColumn = c.createTableViewColumn();
-                        tableViewColumn.setText(c.name());
-                        tableView.getColumns()
-                                .add(tableViewColumn);
-                    });
-            return tableView;
-        }
-
         @Override
         public boolean equals(Object o) {
             if (this == o) {
@@ -386,53 +356,6 @@ public abstract class DBConnection implements AutoCloseable {
         @Override
         public int hashCode() {
             return Objects.hash(name());
-        }
-
-        /**
-         * Return a column which can be used for a {@link TableView} that extracts a certain value of
-         * items of the given type and parses it with this {@link ColumnParser}.
-         *
-         * @return A {@link TableColumn} with a cell value factory but no name.
-         * @since 0.16
-         */
-        @NotNull
-        public TableColumn<E, C> createTableViewColumn() {
-            AtomicBoolean warnedAboutPatternlessColumn = new AtomicBoolean(false);
-
-            TableColumn<E, C> column = new TableColumn<>();
-            column.setCellValueFactory(features -> {
-                if (pattern().isPresent()) {
-                    C value = pattern().get().getValue(features.getValue(), name());
-
-                    // Required for CheckBoxTableCell
-                    if (Boolean.class.isAssignableFrom(columnType())) {
-                        return (ObservableValue<C>) new SimpleBooleanProperty((Boolean) value);
-                    }
-                    return new SimpleObjectProperty<>(value);
-                }
-
-                String columnName = features.getTableColumn().getText();
-                if (!warnedAboutPatternlessColumn.get()) {
-                    LOGGER.log(Level.WARNING, String.format(
-                            "There's no pattern for %s. The column will be empty.", columnName));
-                    warnedAboutPatternlessColumn.set(true);
-                }
-                return null;
-            });
-            column.setCellFactory(c -> {
-                if (pattern().isPresent()) {
-                    c.setEditable(true);
-                    if (Boolean.class.isAssignableFrom(columnType())) {
-                        return new CheckBoxTableCell<>(
-                                index -> (ObservableValue<Boolean>) c.getCellObservableValue(index));
-                    }
-                }
-
-                // Either the type of the column is not supported or it is not part of the scheme
-                c.setEditable(false);
-                return new TextFieldTableCell<>();
-            });
-            return column;
         }
     }
 }
