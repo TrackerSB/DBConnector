@@ -8,6 +8,7 @@ import bayern.steinbrecher.dbConnector.scheme.ColumnParser;
 import bayern.steinbrecher.dbConnector.scheme.ColumnPattern;
 import bayern.steinbrecher.dbConnector.scheme.SimpleColumnPattern;
 import bayern.steinbrecher.dbConnector.scheme.TableScheme;
+import javafx.beans.value.ObservableValue;
 import javafx.beans.value.ObservableValueBase;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -394,16 +395,21 @@ public abstract class DBConnection implements AutoCloseable {
          * @since 0.16
          */
         @NotNull
-        public TableColumn<E, C> createTableViewColumn() {
+        public TableColumn<E, ObservableValue<C>> createTableViewColumn() {
             AtomicBoolean warnedAboutPatternlessColumn = new AtomicBoolean(false);
 
-            TableColumn<E, C> column = new TableColumn<>();
+            TableColumn<E, ObservableValue<C>> column = new TableColumn<>();
             column.setCellValueFactory(features -> new ObservableValueBase<>() {
                 @Override
-                public C getValue() {
-                    C value;
+                public ObservableValue<C> getValue() {
+                    ObservableValue<C> value;
                     if (pattern().isPresent()) {
-                        value = pattern().get().getValue(features.getValue(), name());
+                        value = new ObservableValueBase<>() {
+                            @Override
+                            public C getValue() {
+                                return pattern().get().getValue(features.getValue(), name());
+                            }
+                        };
                     } else {
                         String columnName = features.getTableColumn().getText();
                         if (!warnedAboutPatternlessColumn.get()) {
@@ -420,12 +426,8 @@ public abstract class DBConnection implements AutoCloseable {
                 if (pattern().isPresent()) {
                     c.setEditable(true);
                     if (Boolean.class.isAssignableFrom(columnType())) {
-                        return new CheckBoxTableCell<>(index -> new ObservableValueBase<>() {
-                            @Override
-                            public Boolean getValue() {
-                                return (Boolean) c.getCellObservableValue(index).getValue();
-                            }
-                        });
+                        return new CheckBoxTableCell<>(
+                                index -> (ObservableValue<Boolean>) c.getCellObservableValue(index).getValue());
                     }
                 }
 
