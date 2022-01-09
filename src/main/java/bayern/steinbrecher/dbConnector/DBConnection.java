@@ -8,8 +8,9 @@ import bayern.steinbrecher.dbConnector.scheme.ColumnParser;
 import bayern.steinbrecher.dbConnector.scheme.ColumnPattern;
 import bayern.steinbrecher.dbConnector.scheme.SimpleColumnPattern;
 import bayern.steinbrecher.dbConnector.scheme.TableScheme;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
-import javafx.beans.value.ObservableValueBase;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.CheckBoxTableCell;
@@ -401,12 +402,13 @@ public abstract class DBConnection implements AutoCloseable {
             TableColumn<E, C> column = new TableColumn<>();
             column.setCellValueFactory(features -> {
                 if (pattern().isPresent()) {
-                    return new ObservableValueBase<>() {
-                        @Override
-                        public C getValue() {
-                            return pattern().get().getValue(features.getValue(), name());
-                        }
-                    };
+                    C value = pattern().get().getValue(features.getValue(), name());
+
+                    // Required for CheckBoxTableCell
+                    if (Boolean.class.isAssignableFrom(columnType())) {
+                        return (ObservableValue<C>) new SimpleBooleanProperty((Boolean) value);
+                    }
+                    return new SimpleObjectProperty<>(value);
                 }
 
                 String columnName = features.getTableColumn().getText();
