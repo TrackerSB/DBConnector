@@ -11,6 +11,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.util.StringConverter;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.LocalDate;
@@ -70,6 +71,19 @@ public final class TableViewGenerator {
                 if (LocalDate.class.isAssignableFrom(column.columnType())) {
                     return new DatePickerTableCell<>(
                             index -> (Property<LocalDate>) c.getCellObservableValue(index));
+                }
+                if(String.class.isAssignableFrom(column.columnType())){
+                    return new TextFieldTableCell<>(new StringConverter<C>() {
+                        @Override
+                        public String toString(C object) {
+                            return (String) object;
+                        }
+
+                        @Override
+                        public C fromString(String string) {
+                            return (C) string;
+                        }
+                    });
                 }
             }
 
