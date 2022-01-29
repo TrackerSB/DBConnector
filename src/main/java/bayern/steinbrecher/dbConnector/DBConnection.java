@@ -326,7 +326,7 @@ public abstract class DBConnection implements AutoCloseable {
         // NOTE Only the class Table should be allowed to create Column objects
         public Column {
             if (index < 0) {
-                throw new IllegalArgumentException("The index must be not be negative");
+                throw new IllegalArgumentException("The index must not be negative");
             }
         }
 
