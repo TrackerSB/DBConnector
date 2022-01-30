@@ -16,9 +16,6 @@ import java.time.format.DateTimeParseException;
 //TODO Wait for generic enums
 public abstract /* final */ class ColumnParser<T> {
 
-    /**
-     * @since 0.1
-     */
     public static final ColumnParser<String> STRING_COLUMN_PARSER = new ColumnParser<>() {
         @Override
         @Nullable
@@ -43,9 +40,6 @@ public abstract /* final */ class ColumnParser<T> {
             return String.class;
         }
     };
-    /**
-     * @since 0.1
-     */
     public static final ColumnParser<Integer> INTEGER_COLUMN_PARSER = new ColumnParser<>() {
         @Override
         @Nullable
@@ -67,9 +61,6 @@ public abstract /* final */ class ColumnParser<T> {
             return Integer.class;
         }
     };
-    /**
-     * @since 0.1
-     */
     public static final ColumnParser<Boolean> BOOLEAN_COLUMN_PARSER = new ColumnParser<>() {
         @Override
         @Nullable
@@ -93,9 +84,6 @@ public abstract /* final */ class ColumnParser<T> {
             return Boolean.class;
         }
     };
-    /**
-     * @since 0.1
-     */
     public static final ColumnParser<LocalDate> LOCALDATE_COLUMN_PARSER = new ColumnParser<>() {
         @Override
         @Nullable
@@ -123,9 +111,6 @@ public abstract /* final */ class ColumnParser<T> {
             return LocalDate.class;
         }
     };
-    /**
-     * @since 0.1
-     */
     public static final ColumnParser<Double> DOUBLE_COLUMN_PARSER = new ColumnParser<>() {
         @Override
         @Nullable
@@ -153,6 +138,12 @@ public abstract /* final */ class ColumnParser<T> {
     }
 
     /**
+     * Converts the given {@link String} into the actual value type.
+     * It is not guaranteed that this function is the reverse operation of {@link #toString(Object)} since the result of
+     * {@link #toString(Object)} is meant to be used in SQL queries as it is whereas this function parses values as they
+     * are returned form queries.
+     *
+     * @see #toString(Object)
      * @since 0.14
      */
     @Nullable
@@ -166,7 +157,6 @@ public abstract /* final */ class ColumnParser<T> {
      * @param value The value to convert.
      * @return The {@link String} representation of the given value suitable for SQL.
      * @see #toString(Object)
-     * @since 0.1
      */
     @NotNull
     protected String toStringImpl(@NotNull T value) {
@@ -174,12 +164,14 @@ public abstract /* final */ class ColumnParser<T> {
     }
 
     /**
-     * Parses the given value into a {@link String} representation suitable for SQL. Returns the {@link String} "NULL"
+     * Converts the given value into a {@link String} representation suitable for SQL. Returns the {@link String} "NULL"
      * (without quotes) if {@code value} is {@code null}.
+     * It is not guaranteed that this function is the reverse operation of {@link #parse(String)} since the result of
+     * this function is meant for being used in SQL queries as it is.
      *
      * @param value The value to convert.
      * @return A {@link String} representation of the given value suitable for SQL.
-     * @since 0.1
+     * @see #parse(String)
      */
     @NotNull
     public final String toString(@Nullable T value) {
@@ -196,7 +188,6 @@ public abstract /* final */ class ColumnParser<T> {
      * Returns the generic type of the class. This method is needed since type ereasure takes place.
      *
      * @return The generic type of the class.
-     * @since 0.1
      */
     @NotNull
     public abstract Class<T> getType();
