@@ -17,7 +17,7 @@ import java.time.LocalDate;
 public class DatePickerTableCell<E, C> extends TableCell<E, C> {
     private static final LocalDateStringConverter CONVERTER = new LocalDateStringConverter();
     private final Callback<Integer, Property<LocalDate>> getSelectedPropertyCallback;
-    private final DatePicker datePicker = new DatePicker();
+    private DatePicker datePicker;
 
     public DatePickerTableCell(@NotNull Callback<Integer, Property<LocalDate>> getSelectedPropertyCallback) {
         this.getSelectedPropertyCallback = getSelectedPropertyCallback;
@@ -27,7 +27,8 @@ public class DatePickerTableCell<E, C> extends TableCell<E, C> {
         return getSelectedPropertyCallback.call(getIndex());
     }
 
-    private void bindTextToDate(){
+    private void bindTextToDate() {
+        datePicker = null;
         textProperty().bind(
                 Bindings.createStringBinding(
                         () -> CONVERTER.toString(getSelectedProperty().getValue()), getSelectedProperty()));
@@ -44,11 +45,20 @@ public class DatePickerTableCell<E, C> extends TableCell<E, C> {
 
         // Editing started successfully
         if (isEditing()) {
+            datePicker = new DatePicker();
             datePicker.valueProperty().bindBidirectional(getSelectedProperty());
+            datePicker.setOnAction(aevt -> commitEdit((C) datePicker.getValue()));
             textProperty().unbind();
             setText(null);
             setGraphic(datePicker);
         }
+    }
+
+    @Override
+    public void commitEdit(C newValue) {
+        super.commitEdit(newValue);
+        bindTextToDate();
+        setGraphic(null);
     }
 
     @Override
