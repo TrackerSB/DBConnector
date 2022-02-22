@@ -72,7 +72,9 @@ public class DatePickerTableCell<E, C> extends TableCell<E, C> {
     protected void updateItem(C item, boolean empty) {
         super.updateItem(item, empty);
 
-        if (!empty && !isEditing()) {
+        if (empty || isEditing()) {
+            setText(null);
+        } else {
             bindTextToDate();
         }
     }
