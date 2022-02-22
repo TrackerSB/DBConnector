@@ -27,11 +27,17 @@ public class DatePickerTableCell<E, C> extends TableCell<E, C> {
         return getSelectedPropertyCallback.call(getIndex());
     }
 
-    private void bindTextToDate() {
+    private void bindCellToSelectedProperty() {
         datePicker = null;
         textProperty().bind(
                 Bindings.createStringBinding(
                         () -> CONVERTER.toString(getSelectedProperty().getValue()), getSelectedProperty()));
+        setGraphic(null);
+    }
+
+    private void unbindCellFromSelectedProperty() {
+        textProperty().unbind();
+        setText(null);
     }
 
     @Override
@@ -45,11 +51,10 @@ public class DatePickerTableCell<E, C> extends TableCell<E, C> {
 
         // Editing started successfully
         if (isEditing()) {
+            unbindCellFromSelectedProperty();
             datePicker = new DatePicker();
             datePicker.valueProperty().bindBidirectional(getSelectedProperty());
             datePicker.setOnAction(aevt -> commitEdit((C) datePicker.getValue()));
-            textProperty().unbind();
-            setText(null);
             setGraphic(datePicker);
         }
     }
@@ -57,15 +62,13 @@ public class DatePickerTableCell<E, C> extends TableCell<E, C> {
     @Override
     public void commitEdit(C newValue) {
         super.commitEdit(newValue);
-        bindTextToDate();
-        setGraphic(null);
+        bindCellToSelectedProperty();
     }
 
     @Override
     public void cancelEdit() {
         super.cancelEdit();
-        bindTextToDate();
-        setGraphic(null);
+        bindCellToSelectedProperty();
     }
 
     @Override
@@ -73,9 +76,9 @@ public class DatePickerTableCell<E, C> extends TableCell<E, C> {
         super.updateItem(item, empty);
 
         if (empty || isEditing()) {
-            setText(null);
+            unbindCellFromSelectedProperty();
         } else {
-            bindTextToDate();
+            bindCellToSelectedProperty();
         }
     }
 }
