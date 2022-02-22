@@ -68,6 +68,41 @@ public final class TableViewGenerator {
         return Optional.empty();
     }
 
+    @NotNull
+    private static <E, C> ChangeListener<C> createItemChangeListener(
+            @NotNull DBConnection.Column<E, C> dbColumn, @NotNull TableCell<E, C> cell) {
+        return new ChangeListener<>() {
+            @Override
+            public void changed(ObservableValue<? extends C> obs, C previousCellValue, C currentCellValue) {
+                Optional<ColumnPattern<C, E>> optPattern = dbColumn.pattern();
+                assert optPattern.isPresent() : "If there is no pattern associated with the "
+                        + "column there is no item associated which could be updated";
+
+                ObservableList<E> resolvedItems = cell.getTableView().getItems();
+                int resolvedRowIndex = cell.getIndex();
+
+                // Resolve items and index if they are wrapped by SortedList, FilteredList etc.
+                while (resolvedItems instanceof TransformationList<?, ?> resolvedTransList) {
+                    resolvedRowIndex = resolvedTransList.getSourceIndex(resolvedRowIndex);
+                    resolvedItems = (ObservableList<E>) resolvedTransList.getSource();
+                }
+
+                E currentItem = resolvedItems.get(resolvedRowIndex);
+                /* NOTE 2022-02-05: If editing was cancelled on a cell before this listener may be attached multiple
+                 * times and thus called multiple times. Avoid setting the current cell value multiple times.
+                 */
+                C currentItemValue = optPattern.get().getValue(currentItem, dbColumn.name());
+                if (currentItemValue != currentCellValue) {
+                    E updatedItem = optPattern.get().combine(currentItem, dbColumn.name(),
+                            String.valueOf(currentCellValue));
+                    // FIXME Do DB update and check whether it succeeded
+                    resolvedItems.set(resolvedRowIndex, updatedItem);
+                }
+                cell.itemProperty().removeListener(this);
+            }
+        };
+    }
+
     /**
      * Return a column which can be used for a {@link TableView} that extracts a certain value of
      * items of the given type and parses it with this {@link ColumnParser}.
@@ -102,50 +137,23 @@ public final class TableViewGenerator {
         viewColumn.setCellFactory(tableColumn -> {
             Optional<TableCell<E, C>> optCell = createTableCell(dbColumn, tableColumn);
 
-            optCell.ifPresentOrElse(cell -> {
-                        tableColumn.setEditable(true);
+            if (optCell.isPresent()) {
+                TableCell<E, C> cell = optCell.get();
+                tableColumn.setEditable(true);
 
-                        ChangeListener<C> itemChangeListener = new ChangeListener<>() {
-                            @Override
-                            public void changed(ObservableValue<? extends C> obs, C previousCellValue, C currentCellValue) {
-                                Optional<ColumnPattern<C, E>> optPattern = dbColumn.pattern();
-                                assert optPattern.isPresent() : "If there is no pattern associated with the "
-                                        + "column there is no item associated which could be updated";
+                ChangeListener<C> itemChangeListener = createItemChangeListener(dbColumn, cell);
 
-                                ObservableList<E> resolvedItems = cell.getTableView().getItems();
-                                int resolvedRowIndex = cell.getIndex();
+                cell.editingProperty().addListener((obs, wasEditing, isEditing) -> {
+                    if (isEditing) {
+                        cell.itemProperty().addListener(itemChangeListener);
+                    }
+                    // FIXME 2022-01-05: Remove listener on edit cancellation
+                });
+                return cell;
+            }
 
-                                // Resolve items and index if they are wrapped by SortedList, FilteredList etc.
-                                while (resolvedItems instanceof TransformationList<?, ?> resolvedTransList) {
-                                    resolvedRowIndex = resolvedTransList.getSourceIndex(resolvedRowIndex);
-                                    resolvedItems = (ObservableList<E>) resolvedTransList.getSource();
-                                }
-
-                                E currentItem = resolvedItems.get(resolvedRowIndex);
-                                /* NOTE 2022-02-05:  If editing was cancelled on a cell before this listener may be
-                                 * attached multiple times and thus called multiple times. Avoid setting the current
-                                 * cell value multiple times.
-                                 */
-                                C currentItemValue = optPattern.get().getValue(currentItem, dbColumn.name());
-                                if (currentItemValue != currentCellValue) {
-                                    E updatedItem = optPattern.get().combine(currentItem, dbColumn.name(),
-                                            String.valueOf(currentCellValue));
-                                    resolvedItems.set(resolvedRowIndex, updatedItem);
-                                }
-                                cell.itemProperty().removeListener(this);
-                            }
-                        };
-
-                        cell.editingProperty().addListener((obs, wasEditing, isEditing) -> {
-                            if (isEditing) {
-                                cell.itemProperty().addListener(itemChangeListener);
-                            }
-                            // FIXME 2022-01-05: Remove listener on edit cancellation
-                        });
-                    },
-                    () -> tableColumn.setEditable(false));
-
-            return optCell.orElse(new TextFieldTableCell<>());
+            tableColumn.setEditable(false);
+            return new TextFieldTableCell<>();
         });
         return viewColumn;
     }
