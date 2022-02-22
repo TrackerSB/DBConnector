@@ -95,7 +95,6 @@ public final class TableViewGenerator {
                 if (currentItemValue != currentCellValue) {
                     E updatedItem = optPattern.get().combine(currentItem, dbColumn.name(),
                             String.valueOf(currentCellValue));
-                    // FIXME Do DB update and check whether it succeeded
                     resolvedItems.set(resolvedRowIndex, updatedItem);
                 }
                 cell.itemProperty().removeListener(this);
@@ -159,8 +158,8 @@ public final class TableViewGenerator {
     }
 
     /**
-     * Return an empty {@link TableView} showing all columns of the given table and allowing to visualize any objects of
-     * type {@code E}.
+     * Return an empty {@link TableView} that has columns for all columns of the given table and allows visualizing as
+     * well as editing any items of type {@code E} that are set to it.
      */
     @NotNull
     public static <E> TableView<E> createTableView(@NotNull DBConnection.Table<?, E> table)
