@@ -7,7 +7,6 @@ import bayern.steinbrecher.dbConnector.scheme.ColumnPattern;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.TransformationList;
@@ -68,40 +67,6 @@ public final class TableViewGenerator {
         return Optional.empty();
     }
 
-    @NotNull
-    private static <E, C> ChangeListener<C> createItemChangeListener(
-            @NotNull DBConnection.Column<E, C> dbColumn, @NotNull TableCell<E, C> cell) {
-        return new ChangeListener<>() {
-            @Override
-            public void changed(ObservableValue<? extends C> obs, C previousCellValue, C currentCellValue) {
-                Optional<ColumnPattern<C, E>> optPattern = dbColumn.pattern();
-                assert optPattern.isPresent() : "If there is no pattern associated with the "
-                        + "column there is no item associated which could be updated";
-
-                ObservableList<E> resolvedItems = cell.getTableView().getItems();
-                int resolvedRowIndex = cell.getIndex();
-
-                // Resolve items and index if they are wrapped by SortedList, FilteredList etc.
-                while (resolvedItems instanceof TransformationList<?, ?> resolvedTransList) {
-                    resolvedRowIndex = resolvedTransList.getSourceIndex(resolvedRowIndex);
-                    resolvedItems = (ObservableList<E>) resolvedTransList.getSource();
-                }
-
-                E currentItem = resolvedItems.get(resolvedRowIndex);
-                /* NOTE 2022-02-05: If editing was cancelled on a cell before this listener may be attached multiple
-                 * times and thus called multiple times. Avoid setting the current cell value multiple times.
-                 */
-                C currentItemValue = optPattern.get().getValue(currentItem, dbColumn.name());
-                if (currentItemValue != currentCellValue) {
-                    E updatedItem = optPattern.get().combine(currentItem, dbColumn.name(),
-                            String.valueOf(currentCellValue));
-                    resolvedItems.set(resolvedRowIndex, updatedItem);
-                }
-                cell.itemProperty().removeListener(this);
-            }
-        };
-    }
-
     /**
      * Return a column which can be used for a {@link TableView} that extracts a certain value of
      * items of the given type and parses it with this {@link ColumnParser}.
@@ -109,6 +74,7 @@ public final class TableViewGenerator {
      * @return A {@link TableColumn} with a cell value factory but no name.
      */
     @NotNull
+    @SuppressWarnings("unchecked")
     private static <E, C> TableColumn<E, C> createTableViewColumn(@NotNull DBConnection.Column<E, C> dbColumn) {
         var warnedAboutPatternlessColumn = new AtomicBoolean(false);
 
@@ -139,20 +105,34 @@ public final class TableViewGenerator {
             if (optCell.isPresent()) {
                 TableCell<E, C> cell = optCell.get();
                 tableColumn.setEditable(true);
-
-                ChangeListener<C> itemChangeListener = createItemChangeListener(dbColumn, cell);
-
-                cell.editingProperty().addListener((obs, wasEditing, isEditing) -> {
-                    if (isEditing) {
-                        cell.itemProperty().addListener(itemChangeListener);
-                    }
-                    // FIXME 2022-01-05: Remove listener on edit cancellation
-                });
                 return cell;
             }
 
             tableColumn.setEditable(false);
             return new TextFieldTableCell<>();
+        });
+        viewColumn.setOnEditCommit(event -> {
+            Optional<ColumnPattern<C, E>> optPattern = dbColumn.pattern();
+            assert optPattern.isPresent() : "If there is no pattern associated with the "
+                    + "column there is no item associated which could be updated";
+
+            ObservableList<E> resolvedItems = event.getTableView().getItems();
+            int resolvedRowIndex = event.getTablePosition().getRow();
+
+            // Resolve items and index if they are wrapped by SortedList, FilteredList etc.
+            while (resolvedItems instanceof TransformationList<?, ?> resolvedTransList) {
+                resolvedRowIndex = resolvedTransList.getSourceIndex(resolvedRowIndex);
+                resolvedItems = (ObservableList<E>) resolvedTransList.getSource();
+            }
+
+            E currentItem = event.getRowValue();
+            C currentItemValue = optPattern.get().getValue(currentItem, dbColumn.name());
+            C currentCellValue = event.getNewValue();
+            if (currentItemValue != currentCellValue) {
+                E updatedItem = optPattern.get().combine(currentItem, dbColumn.name(),
+                        String.valueOf(currentCellValue));
+                resolvedItems.set(resolvedRowIndex, updatedItem);
+            }
         });
         return viewColumn;
     }
