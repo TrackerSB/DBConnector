@@ -5,6 +5,7 @@ import bayern.steinbrecher.dbConnector.scheme.ColumnParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.LocalDate;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -124,6 +125,25 @@ public abstract class QueryOperator<T> {
     public abstract QueryCondition<T> generateCondition(
             @NotNull QueryGenerator queryGenerator, @NotNull Object... arguments);
 
+    @NotNull
+    public static <T> BinaryQueryOperator<T> getEqualityOperator(Class<T> type) {
+        if (String.class.isAssignableFrom(type)) {
+            return (BinaryQueryOperator<T>) QueryOperator.LIKE;
+        }
+        // FIXME Is there a boolean "equality" operator?
+        if (Integer.class.isAssignableFrom(type)) {
+            return (BinaryQueryOperator<T>) QueryOperator.IS_EQUAL_I;
+        }
+        if (Double.class.isAssignableFrom(type)) {
+            return (BinaryQueryOperator<T>) QueryOperator.IS_EQUAL_D;
+        }
+        if (LocalDate.class.isAssignableFrom(type)) {
+            return (BinaryQueryOperator<T>) QueryOperator.IS_AT_DATE;
+        }
+        throw new NoSuchElementException(
+                String.format("There is no SQL equality operator for %s defined", type.getName()));
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -190,8 +210,10 @@ public abstract class QueryOperator<T> {
             return convertAsTypeArgument(argument)
                     .or(() -> convertAsColumnArgument(queryGenerator, argument))
                     .orElseThrow(() -> new IllegalArgumentException(
-                            String.format("Only objects of type '%s' and '%s' as arguments accepted",
-                                    runtimeGenericTypeProvider.getSimpleName(), Column.class.getSimpleName())));
+                            String.format("Only objects of type '%s' and '%s' as arguments accepted whereas the given "
+                                            + "argument is of type '%s'",
+                                    runtimeGenericTypeProvider.getName(), Column.class.getName(),
+                                    argument.getClass().getName())));
         }
     }
 

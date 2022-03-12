@@ -1,6 +1,7 @@
 package bayern.steinbrecher.dbConnector.query;
 
 import bayern.steinbrecher.dbConnector.DBConnection;
+import bayern.steinbrecher.dbConnector.scheme.ColumnParser;
 import bayern.steinbrecher.dbConnector.scheme.ColumnPattern;
 import bayern.steinbrecher.dbConnector.scheme.SimpleColumnPattern;
 import bayern.steinbrecher.dbConnector.scheme.TableScheme;
@@ -62,6 +63,7 @@ public class QueryGenerator {
     private final Template queryTableNamesTemplate;
     private final Template queryColumnNamesAndTypesTemplate;
     private final Template searchQueryTemplate;
+    private final Template updateQueryTemplate;
 
     /**
      * NOTE Only the class {@link SupportedDBMS} should instantiate objects of this class.
@@ -84,6 +86,10 @@ public class QueryGenerator {
         templateConfig.setLogTemplateExceptions(false);
         templateConfig.setWrapUncheckedExceptions(true);
         templateConfig.setFallbackOnNullLoopVariable(false);
+        /* NOTE 2022-03-11: Starting with FreeMarker 2.3.21 he default value "true,false" leads to an exception if any
+         * boolean value is used like {@code ${myBool}} instead of the recommended {@code ${myBool?c}}.
+         */
+        templateConfig.setBooleanFormat("TRUE,FALSE");
         try {
             templateConfig.setClassLoaderForTemplateLoading(TEMPLATE_PROVIDING_CLASS.getClassLoader(),
                     TEMPLATE_DIR_BASE_PATH.resolve(Objects.requireNonNull(templateDirectoryPath)).toString());
@@ -93,6 +99,7 @@ public class QueryGenerator {
             queryTableNamesTemplate = templateConfig.getTemplate("queryTableNames.ftlh");
             queryColumnNamesAndTypesTemplate = templateConfig.getTemplate("queryColumnNamesAndTypes.ftlh");
             searchQueryTemplate = templateConfig.getTemplate("searchQuery.ftlh");
+            updateQueryTemplate = templateConfig.getTemplate("updateQuery.ftlh");
         } catch (IOException ex) {
             throw new ExceptionInInitializerError(ex);
         }
@@ -187,6 +194,25 @@ public class QueryGenerator {
                         "dbName", Objects.requireNonNull(dbName),
                         "table", Objects.requireNonNull(table),
                         "columnsToSelect", Objects.requireNonNull(columnsToSelect),
+                        "conditions", Objects.requireNonNull(conditions)
+                ));
+    }
+
+    /**
+     * @param changes It is assumed that the values of the given {@link Map} are already converted to SQL compatible
+     *                {@link String}s using {@link ColumnParser#toString(Object)}.
+     */
+    @NotNull
+    public <T> String generateUpdateQueryStatement(@NotNull String dbName, @NotNull DBConnection.Table<T, ?> table,
+                                                   @NotNull Map<String, String> changes,
+                                                   @NotNull Iterable<QueryCondition<?>> conditions)
+            throws GenerationFailedException {
+        // FIXME Check whether any involved columns are contained by the specified table
+        return populateTemplate(
+                updateQueryTemplate, Map.of(
+                        "dbName", Objects.requireNonNull(dbName),
+                        "table", Objects.requireNonNull(table),
+                        "changes", Objects.requireNonNull(changes),
                         "conditions", Objects.requireNonNull(conditions)
                 ));
     }
