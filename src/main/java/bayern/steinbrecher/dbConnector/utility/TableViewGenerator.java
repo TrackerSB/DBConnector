@@ -12,6 +12,7 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.TransformationList;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TablePosition;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
@@ -85,7 +86,19 @@ public final class TableViewGenerator {
 
                 // NOTE 2022-01-09: Required to ensure CheckBoxTableCell shows value
                 if (Boolean.class.isAssignableFrom(dbColumn.columnType())) {
-                    return (ObservableValue<C>) new SimpleBooleanProperty((Boolean) cellValue);
+                    var valueProperty = new SimpleBooleanProperty((Boolean) cellValue);
+
+                    /* NOTE 2022-03-12: Since CheckBoxTableCell does not enter/leave an editing state a value change has
+                     * to be triggered manually.
+                     */
+                    valueProperty.addListener((obs, wasSelected, isSelected) -> {
+                        var position = new TablePosition<>(features.getTableView(), -1, features.getTableColumn());
+                        viewColumn.onEditCommitProperty().get().handle(
+                                new TableColumn.CellEditEvent<>(
+                                        features.getTableView(), position, null, (C) isSelected));
+                    });
+
+                    return (ObservableValue<C>) valueProperty;
                 }
                 return new SimpleObjectProperty<>(cellValue);
             }
