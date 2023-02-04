@@ -184,8 +184,8 @@ public class QueryGenerator {
      * @param conditions      List of conditions which is combined as conjunction.
      */
     @NotNull
-    public <T> String generateSearchQueryStatement(@NotNull String dbName, @NotNull DBConnection.Table<T, ?> table,
-                                                   @NotNull Iterable<DBConnection.Column<T, ?>> columnsToSelect,
+    public <T, E> String generateSearchQueryStatement(@NotNull String dbName, @NotNull DBConnection.Table<T, E> table,
+                                                   @NotNull Iterable<DBConnection.Column<E, ?>> columnsToSelect,
                                                    @NotNull Iterable<QueryCondition<?>> conditions)
             throws GenerationFailedException {
         // FIXME Check whether any involved columns are contained by the specified table
