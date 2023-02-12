@@ -25,8 +25,10 @@ import java.util.logging.Logger;
 public final class SimpleConnection extends DBConnection {
 
     private static final Logger LOGGER = Logger.getLogger(SimpleConnection.class.getName());
-    private static final Map<SupportedDBMS, String> DRIVER_PROTOCOLS
-            = Map.of(SupportedDBMS.MY_SQL, "jdbc:mysql://");
+    private static final Map<SupportedDBMS, String> DRIVER_PROTOCOLS = Map.of(
+            SupportedDBMS.MARIADB, "jdbc:mariadb://",
+            SupportedDBMS.MY_SQL, "jdbc:mysql://"
+    );
     private Connection connection;
 
     /**
