@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -63,6 +64,7 @@ public class QueryGenerator {
     private final Template queryTableNamesTemplate;
     private final Template queryColumnNamesAndTypesTemplate;
     private final Template searchQueryTemplate;
+    private final Template insertQueryTemplate;
     private final Template updateQueryTemplate;
 
     /**
@@ -99,6 +101,7 @@ public class QueryGenerator {
             queryTableNamesTemplate = templateConfig.getTemplate("queryTableNames.ftlh");
             queryColumnNamesAndTypesTemplate = templateConfig.getTemplate("queryColumnNamesAndTypes.ftlh");
             searchQueryTemplate = templateConfig.getTemplate("searchQuery.ftlh");
+            insertQueryTemplate = templateConfig.getTemplate("insertQuery.ftlh");
             updateQueryTemplate = templateConfig.getTemplate("updateQuery.ftlh");
         } catch (IOException ex) {
             throw new ExceptionInInitializerError(ex);
@@ -180,13 +183,53 @@ public class QueryGenerator {
     }
 
     /**
+     * @since 0.16
+     */
+    @NotNull
+    public <T, E, C> String generateInsertQueryStatement(@NotNull String dbName, @NotNull DBConnection.Table<T, E> table,
+                                                         @NotNull E entry)
+            throws GenerationFailedException {
+        Map<String, String> fieldEntries = new HashMap<>();
+        try {
+            for (DBConnection.Column<E, ?> column : table.getColumns()) {
+                @SuppressWarnings("unchecked")
+                Optional<? extends ColumnPattern<C, E>> pattern
+                        = (Optional<? extends ColumnPattern<C, E>>) column.pattern();
+                if (pattern.isPresent()) {
+                    C cellValue = pattern.get().getValue(entry, column.name());
+                    String sqlValue = pattern.get().getParser().toString(cellValue);
+                    fieldEntries.put(column.name(), sqlValue);
+                }
+            }
+        } catch (QueryFailedException ex) {
+            throw new GenerationFailedException("Could not generate statement for inserting new entry", ex);
+        }
+
+        if (fieldEntries.isEmpty()) {
+            throw new GenerationFailedException("Could not find any column in the scheme that the entry can populate");
+        }
+
+        // FIXME Verify that all required columns are populated
+        /* FIXME Check whether the primary key is populated and not in use already (May have to been done outside this
+         * method)
+         */
+
+        return populateTemplate(
+                insertQueryTemplate, Map.of(
+                        "dbName", Objects.requireNonNull(dbName),
+                        "table", Objects.requireNonNull(table),
+                        "fields", fieldEntries
+                ));
+    }
+
+    /**
      * @param columnsToSelect If empty all columns are selected ({@code SELECT *}).
      * @param conditions      List of conditions which is combined as conjunction.
      */
     @NotNull
     public <T, E> String generateSearchQueryStatement(@NotNull String dbName, @NotNull DBConnection.Table<T, E> table,
-                                                   @NotNull Iterable<DBConnection.Column<E, ?>> columnsToSelect,
-                                                   @NotNull Iterable<QueryCondition<?>> conditions)
+                                                      @NotNull Iterable<DBConnection.Column<E, ?>> columnsToSelect,
+                                                      @NotNull Iterable<QueryCondition<?>> conditions)
             throws GenerationFailedException {
         // FIXME Check whether any involved columns are contained by the specified table
         return populateTemplate(
