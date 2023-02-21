@@ -137,7 +137,7 @@ public abstract class DBConnection implements AutoCloseable {
     @NotNull
     public <T, E> Set<SimpleColumnPattern<?, E>> getMissingColumns(@NotNull TableScheme<T, E> scheme)
             throws QueryFailedException {
-        Set<Column<E, ?>> cachedColumns = getAllColumns(scheme);
+        Set<? extends Column<E, ?>> cachedColumns = getAllColumns(scheme);
         return scheme.getRequiredColumns()
                 .stream()
                 .filter(scp -> cachedColumns.stream().noneMatch(column -> scp.matches(column.name())))
@@ -148,7 +148,7 @@ public abstract class DBConnection implements AutoCloseable {
      * @since 0.5
      */
     @NotNull
-    public <T, E> Set<Column<E, ?>> getAllColumns(@NotNull TableScheme<T, E> tableScheme) throws QueryFailedException {
+    public <T, E> Set<? extends Column<E, ?>> getAllColumns(@NotNull TableScheme<T, E> tableScheme) throws QueryFailedException {
         Optional<Table<T, E>> table;
         try {
             table = getTable(tableScheme);
@@ -247,7 +247,7 @@ public abstract class DBConnection implements AutoCloseable {
 
         @NotNull
         @Unmodifiable
-        public <C> Set<Column<E, ?>> getColumns() throws QueryFailedException {
+        public <C> Set<? extends Column<E, ?>> getColumns() throws QueryFailedException {
             if (cachedColumns.isEmpty()) {
                 try {
                     QueryGenerator queryGenerator = getDbms()

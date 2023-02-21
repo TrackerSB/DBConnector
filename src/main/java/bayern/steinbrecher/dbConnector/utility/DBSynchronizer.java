@@ -40,7 +40,7 @@ public record DBSynchronizer<E>(
      */
     @NotNull
     private <C> Collection<QueryCondition<?>> getPrimaryKeyConditions(
-            @NotNull Set<DBConnection.Column<E, ?>> columns, @NotNull E entry) {
+            @NotNull Set<? extends DBConnection.Column<E, ?>> columns, @NotNull E entry) {
         QueryGenerator queryGenerator = connection().getDbms().getQueryGenerator();
         Collection<QueryCondition<?>> primaryKeyConditions = new ArrayList<>();
         for (DBConnection.Column<E, ?> column : columns) {
@@ -66,7 +66,7 @@ public record DBSynchronizer<E>(
      */
     public <C> void synchronize(@NotNull ObservableList<E> entries) throws InvalidSyncTargetException {
         DBConnection.Table<?, E> table;
-        Set<DBConnection.Column<E, ?>> columns;
+        Set<? extends DBConnection.Column<E, ?>> columns;
         try {
             table = connection().getTable(scheme()).orElseThrow(() -> new InvalidSyncTargetException(
                     "Could not find any table matching the given scheme using the given connection"));

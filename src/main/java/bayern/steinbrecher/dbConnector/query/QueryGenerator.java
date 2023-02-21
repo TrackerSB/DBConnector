@@ -17,6 +17,7 @@ import freemarker.template.TemplateExceptionHandler;
 import freemarker.template.TemplateMethodModelEx;
 import freemarker.template.TemplateModelException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -191,10 +193,10 @@ public class QueryGenerator {
             throws GenerationFailedException {
         Map<String, String> fieldEntries = new HashMap<>();
         try {
-            for (DBConnection.Column<E, ?> column : table.getColumns()) {
-                @SuppressWarnings("unchecked")
-                Optional<? extends ColumnPattern<C, E>> pattern
-                        = (Optional<? extends ColumnPattern<C, E>>) column.pattern();
+            @SuppressWarnings("unchecked")
+            var columns = (Set<? extends DBConnection.Column<E, C>>) table.<C>getColumns();
+            for (DBConnection.Column<E, C> column : columns) {
+                Optional<? extends ColumnPattern<C, E>> pattern = column.pattern();
                 if (pattern.isPresent()) {
                     C cellValue = pattern.get().getValue(entry, column.name());
                     String sqlValue = pattern.get().getParser().toString(cellValue);
