@@ -10,10 +10,13 @@ version "0.16-rc.77-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots"
+    }
 }
 
 dependencies {
-    implementation 'bayern.steinbrecher:JavaUtility:0.18'
+    implementation 'bayern.steinbrecher:JavaUtility:0.19-rc.2-SNAPSHOT'
     implementation 'bayern.steinbrecher:jsch:0.1.57'
     implementation 'com.google.guava:guava:31.1-jre'
     implementation 'org.mariadb.jdbc:mariadb-java-client:3.1.2'
@@ -41,7 +44,7 @@ java {
 }
 
 sourceCompatibility = 19
-targetCompatibility = "$sourceCompatibility" as Integer
+targetCompatibility = 19
 
 javafx {
     version = "$sourceCompatibility"
